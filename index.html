@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Black+Han+Sans&display=swap" rel="stylesheet">
+<style>
+:root{
+  --forest:#1a3a2a;--moss:#2d5a3d;--leaf:#4a8c5c;
+  --sage:#7bbf8e;--mint:#a8d5b5;--cream:#f5f0e8;
+  --gold:#c8965a;--white:#fdfaf5;--teal:#5aacaa;
+  --coral:#d4705a;--muted:rgba(168,213,181,.52);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Gowun Dodum',serif;background:var(--forest);min-height:100vh;color:var(--cream);overflow-x:hidden}
+.fbg{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.lp{position:absolute;opacity:.09;animation:drift linear infinite}
+@keyframes drift{0%{transform:translateY(-30px) rotate(0);opacity:0}10%{opacity:.13}90%{opacity:.08}100%{transform:translateY(110vh) rotate(360deg);opacity:0}}
+.app{position:relative;z-index:1;max-width:560px;margin:0 auto;padding:0 20px 80px;min-height:100vh;display:flex;flex-direction:column}
+.screen{display:none;animation:fu .4s ease forwards}
+.screen.active{display:flex;flex-direction:column}
+@keyframes fu{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+
+.badge{display:inline-flex;align-items:center;gap:6px;background:rgba(74,140,92,.15);border:1px solid rgba(123,191,142,.23);border-radius:999px;padding:5px 13px;font-size:.75rem;color:var(--sage);letter-spacing:1px;align-self:flex-start}
+.sec-title{font-family:'Black Han Sans',sans-serif;font-size:1.42rem;color:var(--white);line-height:1.3}
+.sec-title span{color:var(--sage)}
+.sec-desc{font-size:.87rem;color:var(--mint);opacity:.78;line-height:1.65}
+.card{background:rgba(45,90,61,.36);border:1px solid rgba(123,191,142,.15);border-radius:20px;padding:20px 18px;backdrop-filter:blur(10px)}
+
+.btn-p{background:linear-gradient(135deg,var(--leaf),var(--sage));border:none;border-radius:999px;padding:14px 36px;font-family:'Black Han Sans',sans-serif;font-size:1rem;color:var(--forest);cursor:pointer;transition:transform .2s,box-shadow .2s;box-shadow:0 7px 22px rgba(74,140,92,.26);width:100%}
+.btn-p:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 11px 28px rgba(74,140,92,.4)}
+.btn-p:disabled{opacity:.36;cursor:not-allowed}
+.btn-back{background:transparent;border:1px solid rgba(123,191,142,.18);border-radius:999px;padding:10px 18px;font-size:.85rem;color:var(--sage);cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:5px}
+.btn-back:hover{background:rgba(123,191,142,.07)}
+.nav-row{display:flex;gap:9px;width:100%;margin-top:8px}
+
+/* 랜딩 */
+#sl{min-height:100vh;justify-content:center;align-items:center;text-align:center;gap:0;padding-top:12px}
+.logo-tree{font-size:4.5rem;margin-bottom:2px;filter:drop-shadow(0 0 16px rgba(74,140,92,.48));animation:sway 4s ease-in-out infinite}
+@keyframes sway{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(3deg)}}
+.logo-t{font-family:'Black Han Sans',sans-serif;font-size:2.6rem;color:var(--sage);letter-spacing:-1px;line-height:1;margin-bottom:4px}
+.logo-s{font-size:.82rem;color:var(--mint);opacity:.68;margin-bottom:22px;letter-spacing:2px}
+.a-row{display:flex;justify-content:center;gap:7px;flex-wrap:wrap;margin:12px 0}
+.a-chip{background:rgba(74,140,92,.14);border:1px solid rgba(123,191,142,.2);border-radius:999px;padding:4px 11px;font-size:.8rem;color:var(--mint)}
+.consent{background:rgba(26,58,42,.5);border-radius:11px;padding:11px 14px;font-size:.77rem;color:var(--muted);line-height:1.55;margin-bottom:14px;width:100%;text-align:left}
+.consent label{display:flex;align-items:flex-start;gap:9px;cursor:pointer}
+.consent input{margin-top:3px;accent-color:var(--sage);width:14px;height:14px;flex-shrink:0}
+
+/* 기본 정보 */
+#si{padding-top:40px;gap:16px}
+.sel-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.sw{position:relative}
+.sw.full{grid-column:span 2}
+.sw::after{content:'▾';position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--sage);pointer-events:none;font-size:.82rem}
+select{background:rgba(45,90,61,.33);border:1.5px solid rgba(123,191,142,.17);border-radius:13px;padding:12px 14px;font-family:'Gowun Dodum',serif;font-size:.86rem;color:var(--cream);width:100%;cursor:pointer;appearance:none;outline:none;transition:border-color .2s}
+select:focus{border-color:var(--sage)}
+select option{background:#1a3a2a}
+
+/* 퀴즈 */
+.qsc{padding-top:28px;gap:13px}
+.prog-w{display:flex;align-items:center;gap:10px}
+.prog-bg{flex:1;height:5px;background:rgba(123,191,142,.11);border-radius:999px;overflow:hidden}
+.prog-f{height:100%;background:linear-gradient(90deg,var(--leaf),var(--sage));border-radius:999px;transition:width .36s ease}
+.prog-t{font-size:.75rem;color:var(--sage);min-width:34px;text-align:right}
+.part-lbl{font-size:.7rem;letter-spacing:2px;color:var(--gold);opacity:.78}
+.part-hdr{background:rgba(45,90,61,.23);border-radius:13px;padding:13px 16px;border-left:3px solid var(--sage)}
+.part-hdr h3{font-family:'Black Han Sans',sans-serif;font-size:.9rem;color:var(--white);margin-bottom:3px}
+.part-hdr p{font-size:.78rem;color:var(--mint);opacity:.72;line-height:1.5}
+.qw{margin-bottom:20px}
+.qn{font-size:.78rem;color:var(--sage);opacity:.75;margin-bottom:1px}
+.qt{font-size:1.07rem;color:var(--white);line-height:1.5;margin-bottom:2px;font-weight:normal;letter-spacing:-.01em}
+.qh{font-size:.75rem;color:var(--mint);opacity:.62;font-style:italic;margin-bottom:8px}
+/* 변경된 질문에 강조 표시 */
+.qw.updated .qt{color:var(--mint)}
+.changed-badge{display:inline-flex;align-items:center;gap:4px;background:rgba(200,150,90,.15);border:1px solid rgba(200,150,90,.28);border-radius:999px;padding:2px 9px;font-size:.68rem;color:var(--gold);margin-bottom:6px}
+.choices{display:flex;flex-direction:column;gap:8px;margin-top:9px}
+.cbtn{background:rgba(45,90,61,.24);border:1.5px solid rgba(123,191,142,.12);border-radius:14px;padding:12px 15px;font-family:'Gowun Dodum',serif;font-size:.9rem;color:var(--cream);cursor:pointer;text-align:left;transition:all .2s;display:flex;align-items:center;gap:10px;line-height:1.35}
+.cbtn:hover{background:rgba(74,140,92,.2);border-color:rgba(123,191,142,.36);transform:translateX(3px)}
+.cbtn.sel{background:rgba(74,140,92,.28);border-color:var(--sage);color:var(--white)}
+.cbtn.sel .cn{background:var(--sage);color:var(--forest)}
+.cn{min-width:26px;height:26px;background:rgba(123,191,142,.1);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:.77rem;color:var(--sage);flex-shrink:0;transition:all .2s}
+
+/* 로딩 */
+#sload{min-height:100vh;justify-content:center;align-items:center;text-align:center;gap:20px}
+.la{font-size:4.8rem;animation:bounce .8s ease infinite alternate}
+@keyframes bounce{from{transform:translateY(0) scale(1)}to{transform:translateY(-16px) scale(1.07)}}
+.lt{font-size:1.12rem;color:var(--sage)}
+.dots span{display:inline-block;animation:blink 1.2s ease infinite;color:var(--mint)}
+.dots span:nth-child(2){animation-delay:.2s}
+.dots span:nth-child(3){animation-delay:.4s}
+@keyframes blink{0%,80%,100%{opacity:.2}40%{opacity:1}}
+.lbar-bg{width:180px;height:4px;background:rgba(123,191,142,.11);border-radius:999px;overflow:hidden}
+.lbar-f{height:100%;background:linear-gradient(90deg,var(--leaf),var(--sage));border-radius:999px;animation:lp 2.6s ease forwards}
+@keyframes lp{from{width:0}to{width:100%}}
+
+/* 결과 */
+#sres{padding-top:32px;gap:15px;align-items:center;text-align:center}
+.rg{position:relative;display:flex;justify-content:center;margin-bottom:2px}
+.re{font-size:6rem;position:relative;z-index:1;animation:float 3s ease-in-out infinite;filter:drop-shadow(0 8px 24px rgba(0,0,0,.22))}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+.rc{font-size:.74rem;letter-spacing:4px;color:var(--gold)}
+.rn{font-family:'Black Han Sans',sans-serif;font-size:1.85rem;color:var(--white);line-height:1.2}
+.rn span{color:var(--sage)}
+.rd{font-size:.9rem;line-height:1.78;color:var(--mint);text-align:left}
+.srow{display:flex;align-items:center;gap:8px;background:rgba(26,58,42,.42);border-radius:10px;padding:10px 13px;width:100%}
+.sl2{font-size:.78rem;color:var(--sage);min-width:76px}
+.sb-bg{flex:1;height:6px;background:rgba(123,191,142,.11);border-radius:999px;overflow:hidden}
+.sb-f{height:100%;border-radius:999px;transition:width 1.1s ease .35s}
+.sv{font-size:.78rem;color:var(--cream);min-width:30px;text-align:right}
+
+/* 처방전 */
+.rx-sec{width:100%;text-align:left}
+.rx-notice{background:rgba(200,150,90,.09);border:1px solid rgba(200,150,90,.26);border-radius:11px;padding:11px 14px;font-size:.79rem;color:var(--gold);line-height:1.6;margin-bottom:12px}
+.rx-ttl{font-size:.9rem;color:var(--gold);margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.rxcard{background:rgba(45,90,61,.26);border:1.5px solid rgba(123,191,142,.11);border-radius:17px;padding:14px 15px;margin-bottom:9px;display:flex;flex-direction:column;gap:9px}
+.rx-top{display:flex;align-items:flex-start;gap:12px}
+.rx-ico{font-size:1.5rem;flex-shrink:0;margin-top:1px}
+.rx-info h4{font-size:.9rem;color:var(--white);margin-bottom:2px;font-weight:normal}
+.rx-info p{font-size:.76rem;color:var(--mint);opacity:.76;margin-bottom:4px}
+.tags{display:flex;flex-wrap:wrap;gap:4px}
+.tag{background:rgba(74,140,92,.18);border-radius:999px;padding:2px 9px;font-size:.68rem;color:var(--sage)}
+.vote-wrap{border-top:1px solid rgba(123,191,142,.08);padding-top:9px}
+.vote-row{display:flex;gap:6px}
+.vbtn{flex:1;background:transparent;border:1.5px solid rgba(123,191,142,.16);border-radius:999px;padding:8px 6px;font-family:'Gowun Dodum',serif;font-size:.77rem;cursor:pointer;transition:all .22s;display:flex;align-items:center;justify-content:center;gap:4px;color:var(--cream);white-space:nowrap}
+.vbtn:hover:not(:disabled){background:rgba(123,191,142,.09)}
+.vbtn:disabled{opacity:.42;cursor:default}
+.vbtn.v-yes{background:rgba(74,140,92,.25);border-color:var(--sage);color:var(--sage)}
+.vbtn.v-maybe{background:rgba(200,150,90,.18);border-color:var(--gold);color:var(--gold)}
+.vbtn.v-no{background:rgba(212,112,90,.16);border-color:#d4705a;color:#d4705a}
+.reason-wrap{background:rgba(26,58,42,.42);border-radius:10px;padding:9px 12px;margin-top:7px;animation:fu .3s ease}
+.reason-lbl{font-size:.74rem;color:var(--mint);opacity:.72;margin-bottom:6px}
+.reason-chips{display:flex;gap:5px;flex-wrap:wrap}
+.rchip{background:rgba(45,90,61,.38);border:1px solid rgba(123,191,142,.18);border-radius:999px;padding:4px 11px;font-size:.74rem;color:var(--mint);cursor:pointer;transition:all .2s}
+.rchip:hover{background:rgba(74,140,92,.18)}
+.rchip.picked{background:rgba(74,140,92,.26);border-color:var(--sage);color:var(--sage)}
+.reason-skip{font-size:.71rem;color:var(--sage);opacity:.52;cursor:pointer;text-decoration:underline;margin-top:5px;display:inline-block}
+.share-row{display:flex;gap:8px;width:100%}
+.btn-share{flex:1;background:rgba(200,150,90,.13);border:1px solid rgba(200,150,90,.28);border-radius:999px;padding:10px;font-size:.8rem;color:var(--gold);cursor:pointer;transition:all .2s}
+.btn-share:hover{background:rgba(200,150,90,.22)}
+.others-lbl{font-size:.77rem;color:var(--sage);opacity:.62;align-self:flex-start}
+.others-row{display:flex;gap:6px;flex-wrap:wrap;width:100%}
+.oc{background:rgba(45,90,61,.24);border:1px solid rgba(123,191,142,.11);border-radius:10px;padding:6px 12px;font-size:.78rem;color:var(--mint);cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:4px}
+.oc:hover{background:rgba(74,140,92,.15);border-color:rgba(123,191,142,.28)}
+</style>
+</head>
+<body>
+<div class="fbg" id="fbg"></div>
+<div class="app">
+
+<!-- 랜딩 -->
+<div class="screen active" id="sl">
+  <div class="logo-tree">🌲</div>
+  <div class="logo-t">우리 숲</div>
+  <div class="logo-s">나의 회복 동물 찾기</div>
+  <div class="card" style="margin-bottom:14px;width:100%">
+    <div style="font-family:'Black Han Sans',sans-serif;font-size:1.12rem;color:var(--white);margin-bottom:7px">🌿 지금 내게 필요한 처방전은?</div>
+    <div style="font-size:.88rem;line-height:1.72;color:var(--mint);opacity:.88">20문항으로 나의 회복 방식과 에너지 상태를 알아봐요. 나만의 동물 유형을 찾고, 어떤 문화 프로그램이 나에게 맞는지 확인해봐요.</div>
+  </div>
+  <div class="a-row">
+    <span class="a-chip">🦔 고슴도치</span><span class="a-chip">🦉 부엉이</span><span class="a-chip">🐺 늑대</span><span class="a-chip">🦅 독수리</span>
+    <span class="a-chip">🐼 판다</span><span class="a-chip">🦋 나비</span><span class="a-chip">🐻 곰</span><span class="a-chip">🦦 수달</span>
+  </div>
+  <div class="consent">
+    <label>
+      <input type="checkbox" id="cc" onchange="document.getElementById('sb').disabled=!this.checked">
+      <span>이 테스트 결과는 <strong>고립·은둔 청년을 위한 문화예술 복지 연구</strong>에 익명으로 활용됩니다. 개인 식별 정보는 수집하지 않습니다.</span>
+    </label>
+  </div>
+  <button class="btn-p" id="sb" disabled onclick="go('si')">🌱 내 회복 동물 찾기 시작</button>
+</div>
+
+<!-- 기본 정보 -->
+<div class="screen" id="si" style="padding-top:40px;gap:16px">
+  <span class="badge">🪵 숲 입장 전</span>
+  <div class="sec-title">간단히 알려주세요 <span>🌿</span></div>
+  <div class="sec-desc">결과 분석과 지도 시각화에 사용돼요. 3가지만 골라주세요.</div>
+  <div class="sel-grid">
+    <div class="sw"><select id="sage" onchange="chkI()">
+      <option value="">나이대</option>
+      <option value="1">만 19~22세</option><option value="2">만 23~26세</option>
+      <option value="3">만 27~30세</option><option value="4">만 31~34세</option>
+    </select></div>
+    <div class="sw"><select id="sreg" onchange="chkI()">
+      <option value="">거주 시·도</option>
+      <option value="서울">서울특별시</option><option value="부산">부산광역시</option>
+      <option value="대구">대구광역시</option><option value="인천">인천광역시</option>
+      <option value="광주">광주광역시</option><option value="대전">대전광역시</option>
+      <option value="울산">울산광역시</option><option value="세종">세종특별자치시</option>
+      <option value="경기">경기도</option><option value="강원">강원특별자치도</option>
+      <option value="충북">충청북도</option><option value="충남">충청남도</option>
+      <option value="전북">전북특별자치도</option><option value="전남">전라남도</option>
+      <option value="경북">경상북도</option><option value="경남">경상남도</option>
+      <option value="제주">제주특별자치도</option>
+    </select></div>
+    <div class="sw full"><select id="sstat" onchange="chkI()">
+      <option value="">요즘 나의 상황</option>
+      <option value="job">취업 준비 중</option>
+      <option value="work">직장인 (정규직·계약직)</option>
+      <option value="free">프리랜서 · 자영업</option>
+      <option value="study">학생 (대학·대학원)</option>
+      <option value="both">취업 준비 + 학업 병행</option>
+      <option value="rest">쉬고 있음 (구직 중단)</option>
+      <option value="care">육아 · 가사 전담</option>
+      <option value="etc">그 외</option>
+    </select></div>
+  </div>
+  <div class="nav-row">
+    <button class="btn-back" onclick="go('sl')">← 뒤로</button>
+    <button class="btn-p" id="ib" disabled style="flex:2" onclick="startQ()">다음 →</button>
+  </div>
+</div>
+
+<!-- Q1: S/G -->
+<div class="screen qsc" id="sq1">
+  <div class="prog-w"><div class="prog-bg"><div class="prog-f" id="p1" style="width:0%"></div></div><span class="prog-t" id="pt1">0/4</span></div>
+  <span class="part-lbl">PART 1 · 혼자 vs 함께</span>
+  <div class="part-hdr"><h3>👥 어떤 방식이 더 편한가요?</h3><p>정답 없어요. 솔직한 느낌으로 골라주세요.</p></div>
+  <div id="q1c"></div>
+  <div class="nav-row">
+    <button class="btn-back" onclick="go('si')">← 뒤로</button>
+    <button class="btn-p" id="n1" disabled style="flex:2" onclick="go('sq2');renderQ(Q2,'q2c','p2','pt2','n2',A.qa)">다음 →</button>
+  </div>
+</div>
+
+<!-- Q2: Q/A -->
+<div class="screen qsc" id="sq2">
+  <div class="prog-w"><div class="prog-bg"><div class="prog-f" id="p2" style="width:0%"></div></div><span class="prog-t" id="pt2">0/3</span></div>
+  <span class="part-lbl">PART 2 · 정적 vs 동적</span>
+  <div class="part-hdr"><h3>🏃 쉴 때 어떻게 쉬는 편인가요?</h3><p>가장 자연스러운 내 모습을 골라주세요.</p></div>
+  <div id="q2c"></div>
+  <div class="nav-row">
+    <button class="btn-back" onclick="go('sq1')">← 뒤로</button>
+    <button class="btn-p" id="n2" disabled style="flex:2" onclick="go('sq3');renderQ(Q3,'q3c','p3','pt3','n3',A.re)">다음 →</button>
+  </div>
+</div>
+
+<!-- Q3: R/E -->
+<div class="screen qsc" id="sq3">
+  <div class="prog-w"><div class="prog-bg"><div class="prog-f" id="p3" style="width:0%"></div></div><span class="prog-t" id="pt3">0/5</span></div>
+  <span class="part-lbl">PART 3 · 요즘 에너지 상태</span>
+  <div class="part-hdr"><h3>💤 지금 나는 얼마나 충전되어 있을까?</h3><p>맞다 틀리다가 없어요. 요즘 솔직한 상태를 골라주세요.</p></div>
+  <div id="q3c"></div>
+  <div class="nav-row">
+    <button class="btn-back" onclick="go('sq2')">← 뒤로</button>
+    <button class="btn-p" id="n3" disabled style="flex:2" onclick="go('sq4');renderQ(Q4,'q4c','p4','pt4','n4',A.cond)">다음 →</button>
+  </div>
+</div>
+
+<!-- Q4: 조건 -->
+<div class="screen qsc" id="sq4">
+  <div class="prog-w"><div class="prog-bg"><div class="prog-f" id="p4" style="width:0%"></div></div><span class="prog-t" id="pt4">0/4</span></div>
+  <span class="part-lbl">PART 4 · 맞춤 추천 조건</span>
+  <div class="part-hdr"><h3>🗺️ 마지막 4가지만 알려주세요</h3><p>실제 참여 가능한 조건이에요.</p></div>
+  <div id="q4c"></div>
+  <div class="nav-row">
+    <button class="btn-back" onclick="go('sq3')">← 뒤로</button>
+    <button class="btn-p" id="n4" disabled style="flex:2" onclick="doLoad()">결과 보기 🌲</button>
+  </div>
+</div>
+
+<!-- 로딩 -->
+<div class="screen" id="sload">
+  <div class="la" id="la">🌿</div>
+  <div class="lt">숲에서 당신의 동물을 찾는 중<span class="dots"><span>.</span><span>.</span><span>.</span></span></div>
+  <div class="lbar-bg"><div class="lbar-f"></div></div>
+</div>
+
+<!-- 결과 -->
+<div class="screen" id="sres">
+  <div class="rg"><div class="re" id="re">🦔</div></div>
+  <div class="rc" id="rc">SQR</div>
+  <div class="rn" id="rn">새벽 <span>고슴도치</span></div>
+  <div class="card" style="width:100%"><p class="rd" id="rd"></p></div>
+  <div style="width:100%;display:flex;flex-direction:column;gap:7px" id="rbars"></div>
+  <div class="rx-sec">
+    <div class="rx-notice">
+      💡 아래 프로그램들은 예시예요. 프로젝트 완성 후 실제 지역 프로그램을 맞춤 추천해드릴 예정이에요.<br>각 프로그램에 대한 솔직한 반응을 알려주시면 더 나은 추천을 만드는 데 큰 도움이 돼요!
+    </div>
+    <div class="rx-ttl">📋 예시 처방전 — 반응을 알려주세요</div>
+    <div id="rxlist"></div>
+  </div>
+  <div class="share-row">
+    <button class="btn-share" onclick="doShare()">📤 공유하기</button>
+    <button class="btn-share" onclick="go('sl');resetAll()">🔄 다시 하기</button>
+  </div>
+  <div class="others-lbl">다른 동물 유형 탐색하기</div>
+  <div class="others-row" id="others"></div>
+</div>
+
+</div>
+<script>
+const TYPES={
+  SQR:{emoji:'🦔',name:'새벽 고슴도치',color:'#7bbf8e',
+    desc:'조용히, 혼자, 내 속도로 회복하는 타입이에요. 지금 조금 지쳐있지만 분명 회복할 수 있어요. 고슴도치가 새벽에 조심스레 굴 밖으로 나오듯, 나만의 시간이 필요해요.',
+    rx:[{ico:'🌙',name:'국립현대미술관 야간개장',info:'서울 종로구 · 무료~3,000원 · 화~일 18:00~21:00',tags:['1인 OK','실내','저녁'],id:'p1'},{ico:'🌲',name:'산림청 치유의 숲 명상 산책',info:'전국 각지 · 무료 · 1~2시간 코스',tags:['1인 OK','자연','무료'],id:'p2'},{ico:'📚',name:'국립중앙도서관 독서치유 프로그램',info:'서울 서초구 · 무료 · 사전 신청',tags:['1인 OK','실내','무료'],id:'p3'}]},
+  SQE:{emoji:'🦉',name:'숲속 부엉이',color:'#c8965a',
+    desc:'혼자 조용히 있는 걸 좋아하지만 에너지는 충분해요. 남들이 쉬는 시간에도 눈빛이 빛나는 타입이에요.',
+    rx:[{ico:'📖',name:'독립서점 북토크 이벤트',info:'전국 독립서점 · 무료~10,000원 · 저녁',tags:['소그룹 OK','실내','저녁'],id:'p4'},{ico:'🖼️',name:'대안공간 소규모 사진 전시',info:'서울 홍대·합정 · 무료 · 상시',tags:['1인 OK','감상','무료'],id:'p5'},{ico:'✏️',name:'드로잉 원데이 클래스',info:'전국 공방 · 15,000~25,000원 · 주말',tags:['1인 OK','창작','주말'],id:'p6'}]},
+  SAR:{emoji:'🐺',name:'외로운 늑대',color:'#8facd4',
+    desc:'혼자 움직이고 싶은 마음은 있지만 지금은 좀 쉬고 싶어요. 지금 충전만 하면 곧 다시 달릴 수 있어요.',
+    rx:[{ico:'🏛️',name:'국립민속박물관 상설 관람',info:'서울 종로구 · 무료 · 상시',tags:['1인 OK','실내','무료'],id:'p7'},{ico:'📷',name:'도시 포토워크',info:'전국 도심 · 무료 · 자유 시간',tags:['1인 OK','야외','무료'],id:'p8'},{ico:'🌿',name:'국립수목원 산림치유 체험',info:'경기 포천 · 1,000원 · 주말',tags:['1인 OK','자연','저렴'],id:'p9'}]},
+  SAE:{emoji:'🦅',name:'자유 독수리',color:'#d4a847',
+    desc:'혼자지만 활발하게 탐험하는 타입이에요. 경계 없이 새로운 것에 뛰어드는 에너지가 있어요.',
+    rx:[{ico:'🧗',name:'실내 클라이밍 입문 체험',info:'전국 · 15,000~25,000원',tags:['1인 OK','활동','실내'],id:'p10'},{ico:'🚴',name:'자전거 문화재 탐방',info:'각 지자체 · 무료 · 반나절',tags:['1인 OK','야외','무료'],id:'p11'},{ico:'🎭',name:'거리 문화 공연 탐방',info:'전국 문화의거리 · 무료 · 주말 저녁',tags:['1인 OK','감상','야외'],id:'p12'}]},
+  GQR:{emoji:'🐼',name:'지친 판다',color:'#9eb8d4',
+    desc:'사람은 좋은데 지금은 조금 힘들어요. 작은 연결로 천천히 시작해봐요.',
+    rx:[{ico:'🍵',name:'전통 다례 체험 (소그룹)',info:'전국 한옥 체험관 · 15,000원 · 3~5인',tags:['소그룹','실내','힐링'],id:'p13'},{ico:'🎬',name:'야외영화 상영회',info:'전국 · 무료 · 주말',tags:['소그룹','야외','무료'],id:'p14'},{ico:'🎭',name:'소극장 연극 관람',info:'전국 소극장 · 10,000~20,000원',tags:['소그룹','감상','저녁'],id:'p15'}]},
+  GQE:{emoji:'🦋',name:'봄날 나비',color:'#c4a8d4',
+    desc:'소그룹과 함께 여유롭게 쉬는 타입이에요. 자연스러운 연결 속에서 회복돼요.',
+    rx:[{ico:'🖋️',name:'캘리그라피 원데이 클래스',info:'전국 공방 · 20,000원 · 5~6인',tags:['소그룹','창작','주말'],id:'p16'},{ico:'🎻',name:'예술의전당 소규모 클래식 살롱',info:'서울 서초구 · 청년 할인 10,000~20,000원',tags:['소그룹','감상','저녁'],id:'p17'},{ico:'📚',name:'지역 독립서점 북클럽',info:'전국 · 무료~5,000원 · 월 1회',tags:['소그룹','실내','저녁'],id:'p18'}]},
+  GAR:{emoji:'🐻',name:'졸린 곰',color:'#c4945a',
+    desc:'함께하고 싶은 마음은 있지만 에너지를 충전 중이에요. 부담 없는 그룹 활동으로 천천히 시작해봐요.',
+    rx:[{ico:'🍳',name:'소그룹 쿠킹 클래스',info:'전국 · 30,000원 · 5~6인',tags:['소그룹','창작','주말'],id:'p19'},{ico:'🎲',name:'보드게임 카페 소모임',info:'전국 · 6,000~8,000원 · 저녁',tags:['소그룹','실내','저녁'],id:'p20'},{ico:'🎪',name:'지역 청년 야외 문화행사',info:'각 지자체 · 무료 · 주말',tags:['소그룹','야외','무료'],id:'p21'}]},
+  GAE:{emoji:'🦦',name:'햇살 수달',color:'#5aacaa',
+    desc:'함께할 때 제일 빛나는 활동형이에요! 역동적인 그룹 활동이 딱이에요.',
+    rx:[{ico:'💃',name:'K-댄스 소셜 클래스',info:'전국 · 15,000~20,000원 · 저녁',tags:['그룹','활동','저녁'],id:'p22'},{ico:'🌱',name:'그룹 플로깅',info:'전국 러닝 클럽 · 무료 · 주말 아침',tags:['그룹','야외','무료'],id:'p23'},{ico:'🥁',name:'난타 체험 클래스',info:'전국 · 20,000원 · 소그룹',tags:['소그룹','창작','주말'],id:'p24'}]},
+};
+
+// ─── 문항 데이터 ───────────────────────────────
+const Q1=[
+  {id:'sg1',txt:'주말 자유 시간, 가장 먼저 떠오르는 건?',
+   hint:'"편함" 기준으로 솔직하게',
+   ch:['집에서 혼자 (영상·책·음악)','혼자 밖으로 (카페·산책 등)','한 명이랑 조용히 (카페·대화)','한 명이랑 활발하게 (맛집·쇼핑 등)','소그룹(3~5명)이랑 뭔가','여러 사람들과 활발히'],
+   map:[1,2,3,3,4,5]},
+  {id:'sg2',txt:'처음 보는 사람들이 있는 공간에 들어가야 한다면?',
+   ch:['생각만 해도 피곤하다','조금 불편하다','크게 신경 안 쓰인다','괜찮다, 익숙하다','오히려 설렌다']},
+  // ★ 변경: 편함 → 에너지 충전 프레임
+  {id:'sg3',
+   changed:true,
+   txt:'취미 활동을 마친 후, 어떨 때 더 에너지가 충전된 느낌인가요?',
+   hint:'인트로버트는 혼자 있을 때, 엑스트로버트는 함께할 때 재충전돼요',
+   ch:['혼자 했을 때 확실히 더 충전된다','혼자지만 주변에 사람 있는 환경이 좋다 (카페 등)','혼자든 같이든 별 차이 없다','가끔 같이하는 게 있을 때 더 충전된다','함께했을 때 확실히 더 충전된다']},
+  {id:'sg4',txt:'활동 중 다른 참여자와 대화·협력이 필요하다면?',
+   ch:['최대한 피하고 싶다','최소한만 하고 싶다','상관없다','그것도 재밌을 것 같다','오히려 좋다']},
+];
+const Q2=[
+  {id:'qa1',txt:'에너지가 없을 때 나만의 충전 방식은?',
+   ch:['아무것도 안 하고 가만히 있기','조용한 음악·영화·전시 감상','가벼운 산책이나 걷기','적당한 운동이나 신체 활동','사람들과 활발하게 어울리기']},
+  // ★ 변경: "오후 시간" 특정 제거 → 시간 중립적으로
+  {id:'qa2',
+   changed:true,
+   txt:'자유 시간이 생겼을 때 가장 자연스럽게 끌리는 활동은?',
+   hint:'특정 시간대 상관없이, 몸의 움직임 기준으로',
+   ch:['전시·영화·공연 앉아서 감상','도예·그림·글쓰기 등 만들기','동네 산책하며 사진 찍기','조깅·스트레칭·가벼운 스포츠','댄스·클라이밍 등 활동적인 것']},
+  {id:'qa3',txt:'몸을 활발하게 움직이는 활동은?',
+   ch:['생각만 해도 피곤하다','별로 안 내킨다','상황에 따라 다르다','좋아하는 편이다','아주 좋아한다']},
+];
+const Q3=[
+  {id:'re1',txt:'아침에 일어났을 때 나의 기분은?',ch:['다시 눕고 싶다','별 감흥이 없다','그냥 보통이다','오늘 뭔가 해볼까 싶다','오늘 하루가 기대된다']},
+  {id:'re2',txt:'일·학업을 제외하고, 나 자신을 위한 외출 빈도는?',hint:'퇴근·등교 같은 의무적 외출 제외',ch:['거의 없다 (주 1회 미만)','가끔 있다 (주 1~2회)','보통이다 (주 3~4회)','꽤 자주 있다','매일 나가고 싶다']},
+  {id:'re3',txt:'최근 한 달간 설레거나 기대됐던 순간이?',ch:['전혀 없었다','딱 한 번 있었나…','가끔 있었다','꽤 자주 있었다','많았다']},
+  {id:'re4',txt:'"어디 나가서 뭔가 해볼까"라는 생각이 드나요?',ch:['전혀 없다, 귀찮다','생각은 하지만 몸이 안 따른다','조금 있다','있고 실제로 찾아보기도 한다','지금 당장 뭔가 하고 싶다']},
+  {id:'re5',txt:'일·학업 외의 사람들과 대화가?',ch:['거의 없다','가족하고만 한다','가끔 친구·지인과 한다','꽤 자주 한다','매일 다양하게 한다']},
+];
+const Q4=[
+  {id:'c1',txt:'이동 가능한 거리는?',hint:'편도 기준',ch:['걸어서 10분 이내','대중교통 20분 이내','30분 이내','1시간 이내','상관없어요']},
+  {id:'c2',txt:'1회 참여 예산은?',ch:['무료만 가능','1만원 이하','3만원 이하','5만원 이하','상관없어요']},
+  {id:'c3',txt:'선호하는 활동 시간대는?',ch:['오전 (~12시)','오후 (12~18시)','저녁 (18시 이후)','주말만 가능','상관없어요']},
+  {id:'c4',txt:'편한 공간은?',ch:['실내 (카페·공방·도서관 등)','실외 (공원·자연 등)','상관없어요']},
+];
+
+// ─── 상태 ───────────────────────────────────────
+let A={sg:{},qa:{},re:{},cond:{}};
+const voteLog={};
+
+function go(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+function chkI(){
+  const ok=document.getElementById('sage').value&&document.getElementById('sreg').value&&document.getElementById('sstat').value;
+  document.getElementById('ib').disabled=!ok;
+}
+function startQ(){go('sq1');renderQ(Q1,'q1c','p1','pt1','n1',A.sg);}
+
+// ─── 문항 렌더 ──────────────────────────────────
+function renderQ(data,cid,pid,ptid,nid,ansObj){
+  const c=document.getElementById(cid);c.innerHTML='';
+  data.forEach((q,qi)=>{
+    const d=document.createElement('div');
+    d.className='qw'+(q.changed?' updated':'');
+    d.innerHTML=`
+      ${q.changed?'<span class="changed-badge">✏️ 개선된 질문</span>':''}
+      <div class="qn">Q${qi+1}.</div>
+      <div class="qt">${q.txt}</div>
+      ${q.hint?`<div class="qh">${q.hint}</div>`:''}
+      <div class="choices" id="ch-${q.id}"></div>`;
+    c.appendChild(d);
+    const cd=d.querySelector('#ch-'+q.id);
+    q.ch.forEach((ch,ci)=>{
+      const b=document.createElement('button');
+      b.className='cbtn';
+      b.innerHTML=`<span class="cn">${ci+1}</span>${ch}`;
+      b.onclick=()=>{
+        cd.querySelectorAll('.cbtn').forEach(x=>x.classList.remove('sel'));
+        b.classList.add('sel');
+        ansObj[q.id]=q.map?q.map[ci]:ci+1;
+        const cnt=Object.keys(ansObj).length;
+        document.getElementById(pid).style.width=(cnt/data.length*100)+'%';
+        document.getElementById(ptid).textContent=cnt+'/'+data.length;
+        document.getElementById(nid).disabled=cnt<data.length;
+      };
+      cd.appendChild(b);
+    });
+  });
+}
+
+// ─── 점수 계산 ──────────────────────────────────
+function calcType(){
+  const sg=Object.values(A.sg).reduce((s,v)=>s+v,0)||12;
+  const qa=Object.values(A.qa).reduce((s,v)=>s+v,0)||9;
+  const re=Object.values(A.re).reduce((s,v)=>s+v,0)||15;
+  const code=(sg<=12?'S':'G')+(qa<=9?'Q':'A')+(re<=15?'R':'E');
+  return{code,sgPct:Math.round(((sg-4)/16)*100),qaPct:Math.round(((qa-3)/12)*100),rePct:Math.round(((re-5)/20)*100)};
+}
+
+// ─── 로딩 ───────────────────────────────────────
+const AN=['🌿','🌱','🍃','🌲','🦔','✨'];
+let li=0,tmr=null;
+function doLoad(){
+  go('sload');
+  tmr=setInterval(()=>{document.getElementById('la').textContent=AN[li++%AN.length];},380);
+  setTimeout(()=>{clearInterval(tmr);showResult();},2700);
+}
+
+// ─── 결과 ───────────────────────────────────────
+function showResult(){
+  const{code,sgPct,qaPct,rePct}=calcType();
+  const T=TYPES[code]||TYPES['SQR'];
+  document.getElementById('re').textContent=T.emoji;
+  document.getElementById('re').style.filter=`drop-shadow(0 0 24px ${T.color}68)`;
+  document.getElementById('rc').textContent=code;
+  const pts=T.name.split(' ');
+  document.getElementById('rn').innerHTML=pts.length>1?`${pts[0]} <span>${pts.slice(1).join(' ')}</span>`:`<span>${T.name}</span>`;
+  document.getElementById('rd').textContent=T.desc;
+  const bd=document.getElementById('rbars');bd.innerHTML='';
+  [{l:'함께 선호도',p:sgPct,c:'#c8965a'},{l:'활동 선호도',p:qaPct,c:'#8facd4'},{l:'에너지 충전',p:rePct,c:'#4a8c5c'}].forEach(b=>{
+    const r=document.createElement('div');r.className='srow';
+    r.innerHTML=`<span class="sl2">${b.l}</span><div class="sb-bg"><div class="sb-f" style="width:0%;background:${b.c}" data-p="${b.p}"></div></div><span class="sv">${b.p}%</span>`;
+    bd.appendChild(r);
+  });
+  setTimeout(()=>document.querySelectorAll('.sb-f').forEach(e=>e.style.width=e.dataset.p+'%'),200);
+  const rxl=document.getElementById('rxlist');rxl.innerHTML='';
+  T.rx.forEach(p=>{
+    const card=document.createElement('div');card.className='rxcard';
+    card.innerHTML=`
+      <div class="rx-top"><div class="rx-ico">${p.ico}</div>
+        <div class="rx-info"><h4>${p.name}</h4><p>${p.info}</p>
+          <div class="tags">${p.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>
+        </div>
+      </div>
+      <div class="vote-wrap">
+        <div class="vote-row" id="vr-${p.id}">
+          <button class="vbtn" id="v-yes-${p.id}" onclick="castVote('${p.id}','yes','${code}')">❤️ 좋아요</button>
+          <button class="vbtn" id="v-maybe-${p.id}" onclick="castVote('${p.id}','maybe','${code}')">💰 금액만 아니면</button>
+          <button class="vbtn" id="v-no-${p.id}" onclick="castVote('${p.id}','no','${code}')">👎 별로예요</button>
+        </div>
+        <div id="reason-${p.id}" style="display:none"></div>
+      </div>`;
+    rxl.appendChild(card);
+  });
+  const oth=document.getElementById('others');oth.innerHTML='';
+  Object.entries(TYPES).filter(([k])=>k!==code).forEach(([k,t])=>{
+    const c=document.createElement('div');c.className='oc';
+    c.innerHTML=`${t.emoji} ${t.name}`;
+    c.onclick=()=>alert(`${t.emoji} ${t.name}\n\n${t.desc}`);
+    oth.appendChild(c);
+  });
+  go('sres');
+}
+
+// ─── 투표 ───────────────────────────────────────
+const REASONS=['활동 자체가 안 맞아요','금액이 부담돼요','거리가 멀어요','시간대가 안 맞아요'];
+function castVote(pid,vote,code){
+  if(voteLog[pid]) return;
+  voteLog[pid]={type:code,vote,reasons:[]};
+  ['yes','maybe','no'].forEach(v=>{
+    const btn=document.getElementById(`v-${v}-${pid}`);
+    btn.disabled=true;
+    if(v===vote) btn.classList.add(`v-${v}`);
+  });
+  if(vote==='maybe'||vote==='no'){
+    const rw=document.getElementById('reason-'+pid);
+    rw.style.display='block';
+    rw.innerHTML=`<div class="reason-wrap"><div class="reason-lbl">어떤 부분이 아쉬운가요? (여러 개 선택 가능)</div><div class="reason-chips">${REASONS.map(r=>`<span class="rchip" onclick="pickReason(this,'${pid}','${r.replace(/'/g,"\\'")}')">${r}</span>`).join('')}</div><span class="reason-skip" onclick="document.getElementById('reason-${pid}').style.display='none'">건너뛰기</span></div>`;
+  }
+  console.log('투표:', JSON.stringify(voteLog));
+}
+function pickReason(el,pid,reason){
+  el.classList.toggle('picked');
+  if(!voteLog[pid]) return;
+  const idx=voteLog[pid].reasons.indexOf(reason);
+  if(idx>-1) voteLog[pid].reasons.splice(idx,1); else voteLog[pid].reasons.push(reason);
+  console.log('투표 업데이트:', JSON.stringify(voteLog));
+}
+function doShare(){
+  const code=document.getElementById('rc').textContent;
+  const T=TYPES[code];
+  const msg=`나는 ${T.emoji} ${T.name}! 너는 어떤 회복 동물이야?\n우리 숲 테스트 해봐 🌲`;
+  if(navigator.share){navigator.share({title:'우리 숲',text:msg,url:location.href});}
+  else{navigator.clipboard?.writeText(msg);alert('📋 복사됐어요! 친구에게 공유해봐요 🌿');}
+}
+function resetAll(){
+  A={sg:{},qa:{},re:{},cond:{}};
+  Object.keys(voteLog).forEach(k=>delete voteLog[k]);
+  document.getElementById('cc').checked=false;
+  document.getElementById('sb').disabled=true;
+  ['sage','sreg','sstat'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('ib').disabled=true;
+}
+// 배경
+const pts=['🍃','🍂','🌿','✨','🌱'];
+const fbg=document.getElementById('fbg');
+for(let i=0;i<14;i++){
+  const e=document.createElement('div');e.className='lp';e.textContent=pts[Math.floor(Math.random()*pts.length)];
+  e.style.cssText=`left:${Math.random()*100}%;animation-duration:${9+Math.random()*13}s;animation-delay:${-Math.random()*22}s;font-size:${.8+Math.random()*1}rem`;
+  fbg.appendChild(e);
+}
+</script>
+</body>
+</html>
