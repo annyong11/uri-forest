@@ -860,16 +860,30 @@ const STORE_KEY = 'moonjeonseongsi-map-v3';
 async function saveData() {
   try {
     let data = {};
-    try { const r = await window.storage.get(STORE_KEY, true); if(r) data = JSON.parse(r.value); } catch(e){}
-    const key = `${myRegion}__${myDistrict}__${myAnimal}`;
+    // window.storage (Claude 아티팩트) 우선, 없으면 localStorage 사용
+    if (window.storage) {
+      try { const r = await window.storage.get(STORE_KEY, true); if(r) data = JSON.parse(r.value); } catch(e){}
+    } else {
+      try { const saved = localStorage.getItem(STORE_KEY); if(saved) data = JSON.parse(saved); } catch(e){}
+    }
+    const key = myRegion + '__' + myDistrict + '__' + myAnimal;
     data[key] = (data[key]||0) + 1;
-    await window.storage.set(STORE_KEY, JSON.stringify(data), true);
-  } catch(e) {}
+    if (window.storage) {
+      await window.storage.set(STORE_KEY, JSON.stringify(data), true);
+    } else {
+      localStorage.setItem(STORE_KEY, JSON.stringify(data));
+    }
+  } catch(e) { console.warn('saveData 실패:', e); }
 }
 async function loadMapData() {
   try {
-    const r = await window.storage.get(STORE_KEY, true);
-    if (r) return JSON.parse(r.value);
+    if (window.storage) {
+      const r = await window.storage.get(STORE_KEY, true);
+      if (r) return JSON.parse(r.value);
+    } else {
+      const saved = localStorage.getItem(STORE_KEY);
+      if (saved) return JSON.parse(saved);
+    }
   } catch(e) {}
   return {};
 }
