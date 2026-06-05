@@ -3,517 +3,1006 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>우리 숲 — 나의 회복 동물 찾기</title>
 <link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Black+Han+Sans&display=swap" rel="stylesheet">
 <style>
 :root{
-  --forest:#1a3a2a;--moss:#2d5a3d;--leaf:#4a8c5c;
-  --sage:#7bbf8e;--mint:#a8d5b5;--cream:#f5f0e8;
-  --gold:#c8965a;--white:#fdfaf5;--teal:#5aacaa;
-  --coral:#d4705a;--muted:rgba(168,213,181,.52);
+  --bg:#0f2018;--moss:#1e3d2a;--leaf:#3a7a50;
+  --sage:#6bb880;--mint:#9fd4b0;--cream:#f0ebe0;
+  --gold:#c4924e;--white:#faf6ee;--teal:#4aa8a5;
+  --red:#c44a4a;--purple:#8a5ac8;--coral:#c86a50;
 }
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Gowun Dodum',serif;background:var(--forest);min-height:100vh;color:var(--cream);overflow-x:hidden}
-.fbg{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
-.lp{position:absolute;opacity:.09;animation:drift linear infinite}
-@keyframes drift{0%{transform:translateY(-30px) rotate(0);opacity:0}10%{opacity:.13}90%{opacity:.08}100%{transform:translateY(110vh) rotate(360deg);opacity:0}}
-.app{position:relative;z-index:1;max-width:560px;margin:0 auto;padding:0 20px 80px;min-height:100vh;display:flex;flex-direction:column}
-.screen{display:none;animation:fu .4s ease forwards}
-.screen.active{display:flex;flex-direction:column}
-@keyframes fu{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+body{font-family:'Gowun Dodum',serif;background:var(--bg);color:var(--cream);min-height:100vh;overflow-x:hidden}
+.app{max-width:560px;margin:0 auto;padding:0 18px 60px;min-height:100vh}
+.screen{display:none;flex-direction:column;gap:14px;animation:fu .4s ease}
+.screen.on{display:flex}
+@keyframes fu{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
 
-.badge{display:inline-flex;align-items:center;gap:6px;background:rgba(74,140,92,.15);border:1px solid rgba(123,191,142,.23);border-radius:999px;padding:5px 13px;font-size:.75rem;color:var(--sage);letter-spacing:1px;align-self:flex-start}
-.sec-title{font-family:'Black Han Sans',sans-serif;font-size:1.42rem;color:var(--white);line-height:1.3}
-.sec-title span{color:var(--sage)}
-.sec-desc{font-size:.87rem;color:var(--mint);opacity:.78;line-height:1.65}
-.card{background:rgba(45,90,61,.36);border:1px solid rgba(123,191,142,.15);border-radius:20px;padding:20px 18px;backdrop-filter:blur(10px)}
+/* 배경 파티클 */
+.fbg{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:0}
+.pt{position:absolute;opacity:.08;animation:fall linear infinite}
+@keyframes fall{0%{transform:translateY(-20px);opacity:0}10%{opacity:.12}90%{opacity:.07}100%{transform:translateY(105vh);opacity:0}}
 
-.btn-p{background:linear-gradient(135deg,var(--leaf),var(--sage));border:none;border-radius:999px;padding:14px 36px;font-family:'Black Han Sans',sans-serif;font-size:1rem;color:var(--forest);cursor:pointer;transition:transform .2s,box-shadow .2s;box-shadow:0 7px 22px rgba(74,140,92,.26);width:100%}
-.btn-p:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 11px 28px rgba(74,140,92,.4)}
-.btn-p:disabled{opacity:.36;cursor:not-allowed}
-.btn-back{background:transparent;border:1px solid rgba(123,191,142,.18);border-radius:999px;padding:10px 18px;font-size:.85rem;color:var(--sage);cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:5px}
-.btn-back:hover{background:rgba(123,191,142,.07)}
-.nav-row{display:flex;gap:9px;width:100%;margin-top:8px}
+/* 공통 */
+.badge{display:inline-flex;align-items:center;gap:6px;background:rgba(107,184,128,.15);border:1px solid rgba(107,184,128,.25);border-radius:999px;padding:4px 13px;font-size:.73rem;color:var(--sage);letter-spacing:1px;align-self:flex-start}
+.card{background:rgba(30,61,42,.5);border:1px solid rgba(107,184,128,.15);border-radius:18px;padding:18px 17px;backdrop-filter:blur(8px)}
+.sec-lbl{font-size:.68rem;letter-spacing:2px;color:var(--gold);opacity:.8;text-transform:uppercase}
+.part-hdr{background:rgba(30,61,42,.35);border-left:3px solid var(--sage);border-radius:0 12px 12px 0;padding:11px 15px}
+.part-hdr h3{font-family:'Black Han Sans',sans-serif;font-size:.88rem;color:var(--white);margin-bottom:2px}
+.part-hdr p{font-size:.76rem;color:var(--mint);opacity:.72;line-height:1.5}
+.btn-p{background:linear-gradient(135deg,var(--leaf),var(--sage));border:none;border-radius:999px;padding:14px 36px;font-family:'Black Han Sans',sans-serif;font-size:.98rem;color:#0f2018;cursor:pointer;transition:transform .2s,box-shadow .2s;box-shadow:0 6px 20px rgba(58,122,80,.3);width:100%}
+.btn-p:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 10px 28px rgba(58,122,80,.45)}
+.btn-p:disabled{opacity:.35;cursor:not-allowed}
+.btn-back{background:transparent;border:1px solid rgba(107,184,128,.2);border-radius:999px;padding:10px 17px;font-size:.84rem;color:var(--sage);cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:5px}
+.btn-back:hover{background:rgba(107,184,128,.08)}
+.nav{display:flex;gap:9px;width:100%;margin-top:6px}
+.prog-w{display:flex;align-items:center;gap:10px}
+.prog-bg{flex:1;height:4px;background:rgba(107,184,128,.12);border-radius:999px;overflow:hidden}
+.prog-f{height:100%;background:linear-gradient(90deg,var(--leaf),var(--sage));border-radius:999px;transition:width .35s ease}
+.prog-t{font-size:.73rem;color:var(--sage);min-width:30px;text-align:right}
 
 /* 랜딩 */
-#sl{min-height:100vh;justify-content:center;align-items:center;text-align:center;gap:0;padding-top:12px}
-.logo-tree{font-size:4.5rem;margin-bottom:2px;filter:drop-shadow(0 0 16px rgba(74,140,92,.48));animation:sway 4s ease-in-out infinite}
+#s-land{min-height:100vh;justify-content:center;align-items:center;text-align:center;padding-top:10px}
+.tree-ico{font-size:4.5rem;animation:sway 4s ease-in-out infinite;filter:drop-shadow(0 0 18px rgba(58,122,80,.5))}
 @keyframes sway{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(3deg)}}
-.logo-t{font-family:'Black Han Sans',sans-serif;font-size:2.6rem;color:var(--sage);letter-spacing:-1px;line-height:1;margin-bottom:4px}
-.logo-s{font-size:.82rem;color:var(--mint);opacity:.68;margin-bottom:22px;letter-spacing:2px}
-.a-row{display:flex;justify-content:center;gap:7px;flex-wrap:wrap;margin:12px 0}
-.a-chip{background:rgba(74,140,92,.14);border:1px solid rgba(123,191,142,.2);border-radius:999px;padding:4px 11px;font-size:.8rem;color:var(--mint)}
-.consent{background:rgba(26,58,42,.5);border-radius:11px;padding:11px 14px;font-size:.77rem;color:var(--muted);line-height:1.55;margin-bottom:14px;width:100%;text-align:left}
+.logo-main{font-family:'Black Han Sans',sans-serif;font-size:2.6rem;color:var(--sage);letter-spacing:-1px;line-height:1;margin-bottom:3px}
+.logo-sub{font-size:.8rem;color:var(--mint);opacity:.65;letter-spacing:2px;margin-bottom:22px}
+.animal-row{display:flex;justify-content:center;gap:7px;flex-wrap:wrap;margin:12px 0}
+.a-chip{background:rgba(58,122,80,.16);border:1px solid rgba(107,184,128,.22);border-radius:999px;padding:4px 11px;font-size:.79rem;color:var(--mint)}
+.consent{background:rgba(15,32,24,.55);border-radius:10px;padding:10px 14px;font-size:.76rem;color:rgba(159,212,176,.6);line-height:1.55;text-align:left;width:100%;margin-bottom:12px}
 .consent label{display:flex;align-items:flex-start;gap:9px;cursor:pointer}
-.consent input{margin-top:3px;accent-color:var(--sage);width:14px;height:14px;flex-shrink:0}
+.consent input{margin-top:3px;accent-color:var(--sage);flex-shrink:0}
 
-/* 기본 정보 */
-#si{padding-top:40px;gap:16px}
+/* 기본정보 */
 .sel-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
 .sw{position:relative}
 .sw.full{grid-column:span 2}
-.sw::after{content:'▾';position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--sage);pointer-events:none;font-size:.82rem}
-select{background:rgba(45,90,61,.33);border:1.5px solid rgba(123,191,142,.17);border-radius:13px;padding:12px 14px;font-family:'Gowun Dodum',serif;font-size:.86rem;color:var(--cream);width:100%;cursor:pointer;appearance:none;outline:none;transition:border-color .2s}
+.sw::after{content:'▾';position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--sage);pointer-events:none;font-size:.8rem}
+select{background:rgba(30,61,42,.4);border:1.5px solid rgba(107,184,128,.18);border-radius:12px;padding:11px 14px;font-family:'Gowun Dodum',serif;font-size:.85rem;color:var(--cream);width:100%;cursor:pointer;appearance:none;outline:none;transition:border-color .2s}
 select:focus{border-color:var(--sage)}
-select option{background:#1a3a2a}
+select option{background:#1e3d2a}
 
 /* 퀴즈 */
-.qsc{padding-top:28px;gap:13px}
-.prog-w{display:flex;align-items:center;gap:10px}
-.prog-bg{flex:1;height:5px;background:rgba(123,191,142,.11);border-radius:999px;overflow:hidden}
-.prog-f{height:100%;background:linear-gradient(90deg,var(--leaf),var(--sage));border-radius:999px;transition:width .36s ease}
-.prog-t{font-size:.75rem;color:var(--sage);min-width:34px;text-align:right}
-.part-lbl{font-size:.7rem;letter-spacing:2px;color:var(--gold);opacity:.78}
-.part-hdr{background:rgba(45,90,61,.23);border-radius:13px;padding:13px 16px;border-left:3px solid var(--sage)}
-.part-hdr h3{font-family:'Black Han Sans',sans-serif;font-size:.9rem;color:var(--white);margin-bottom:3px}
-.part-hdr p{font-size:.78rem;color:var(--mint);opacity:.72;line-height:1.5}
-.qw{margin-bottom:20px}
-.qn{font-size:.78rem;color:var(--sage);opacity:.75;margin-bottom:1px}
-.qt{font-size:1.07rem;color:var(--white);line-height:1.5;margin-bottom:2px;font-weight:normal;letter-spacing:-.01em}
-.qh{font-size:.75rem;color:var(--mint);opacity:.62;font-style:italic;margin-bottom:8px}
-/* 변경된 질문에 강조 표시 */
-.qw.updated .qt{color:var(--mint)}
-.changed-badge{display:inline-flex;align-items:center;gap:4px;background:rgba(200,150,90,.15);border:1px solid rgba(200,150,90,.28);border-radius:999px;padding:2px 9px;font-size:.68rem;color:var(--gold);margin-bottom:6px}
+.qw{margin-bottom:18px}
+.qn{font-size:.77rem;color:var(--sage);opacity:.75;margin-bottom:1px}
+.qt{font-size:1.05rem;color:var(--white);line-height:1.5;margin-bottom:2px;font-weight:normal}
+.qh{font-size:.74rem;color:var(--mint);opacity:.6;font-style:italic;margin-bottom:7px}
 .choices{display:flex;flex-direction:column;gap:8px;margin-top:9px}
-.cbtn{background:rgba(45,90,61,.24);border:1.5px solid rgba(123,191,142,.12);border-radius:14px;padding:12px 15px;font-family:'Gowun Dodum',serif;font-size:.9rem;color:var(--cream);cursor:pointer;text-align:left;transition:all .2s;display:flex;align-items:center;gap:10px;line-height:1.35}
-.cbtn:hover{background:rgba(74,140,92,.2);border-color:rgba(123,191,142,.36);transform:translateX(3px)}
-.cbtn.sel{background:rgba(74,140,92,.28);border-color:var(--sage);color:var(--white)}
-.cbtn.sel .cn{background:var(--sage);color:var(--forest)}
-.cn{min-width:26px;height:26px;background:rgba(123,191,142,.1);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:.77rem;color:var(--sage);flex-shrink:0;transition:all .2s}
+.cbtn{background:rgba(30,61,42,.25);border:1.5px solid rgba(107,184,128,.13);border-radius:13px;padding:11px 14px;font-family:'Gowun Dodum',serif;font-size:.89rem;color:var(--cream);cursor:pointer;text-align:left;transition:all .2s;display:flex;align-items:center;gap:10px;line-height:1.35}
+.cbtn:hover{background:rgba(58,122,80,.2);border-color:rgba(107,184,128,.38);transform:translateX(3px)}
+.cbtn.sel{background:rgba(58,122,80,.3);border-color:var(--sage);color:var(--white)}
+.cbtn.sel .cn{background:var(--sage);color:#0f2018}
+.cn{min-width:25px;height:25px;background:rgba(107,184,128,.1);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:.75rem;color:var(--sage);flex-shrink:0;transition:all .2s}
 
 /* 로딩 */
-#sload{min-height:100vh;justify-content:center;align-items:center;text-align:center;gap:20px}
-.la{font-size:4.8rem;animation:bounce .8s ease infinite alternate}
-@keyframes bounce{from{transform:translateY(0) scale(1)}to{transform:translateY(-16px) scale(1.07)}}
-.lt{font-size:1.12rem;color:var(--sage)}
-.dots span{display:inline-block;animation:blink 1.2s ease infinite;color:var(--mint)}
+#s-load{min-height:100vh;justify-content:center;align-items:center;text-align:center;gap:18px}
+.load-a{font-size:5rem;animation:bop .7s ease infinite alternate}
+@keyframes bop{from{transform:translateY(0) scale(1)}to{transform:translateY(-14px) scale(1.06)}}
+.load-t{font-size:1.1rem;color:var(--sage)}
+.dots span{display:inline-block;animation:blink 1.1s ease infinite;color:var(--mint)}
 .dots span:nth-child(2){animation-delay:.2s}
 .dots span:nth-child(3){animation-delay:.4s}
-@keyframes blink{0%,80%,100%{opacity:.2}40%{opacity:1}}
-.lbar-bg{width:180px;height:4px;background:rgba(123,191,142,.11);border-radius:999px;overflow:hidden}
-.lbar-f{height:100%;background:linear-gradient(90deg,var(--leaf),var(--sage));border-radius:999px;animation:lp 2.6s ease forwards}
+@keyframes blink{0%,80%,100%{opacity:.15}40%{opacity:1}}
+.load-bg{width:170px;height:4px;background:rgba(107,184,128,.1);border-radius:999px;overflow:hidden}
+.load-fill{height:100%;background:linear-gradient(90deg,var(--leaf),var(--sage));border-radius:999px;animation:lp 2.6s ease forwards}
 @keyframes lp{from{width:0}to{width:100%}}
 
 /* 결과 */
-#sres{padding-top:32px;gap:15px;align-items:center;text-align:center}
-.rg{position:relative;display:flex;justify-content:center;margin-bottom:2px}
-.re{font-size:6rem;position:relative;z-index:1;animation:float 3s ease-in-out infinite;filter:drop-shadow(0 8px 24px rgba(0,0,0,.22))}
+#s-res{padding-top:30px;align-items:center;text-align:center}
+.res-glow{display:flex;justify-content:center;margin-bottom:4px}
+.res-em{font-size:6rem;animation:float 3s ease-in-out infinite;filter:drop-shadow(0 8px 24px rgba(0,0,0,.22))}
 @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
-.rc{font-size:.74rem;letter-spacing:4px;color:var(--gold)}
-.rn{font-family:'Black Han Sans',sans-serif;font-size:1.85rem;color:var(--white);line-height:1.2}
-.rn span{color:var(--sage)}
-.rd{font-size:.9rem;line-height:1.78;color:var(--mint);text-align:left}
-.srow{display:flex;align-items:center;gap:8px;background:rgba(26,58,42,.42);border-radius:10px;padding:10px 13px;width:100%}
-.sl2{font-size:.78rem;color:var(--sage);min-width:76px}
-.sb-bg{flex:1;height:6px;background:rgba(123,191,142,.11);border-radius:999px;overflow:hidden}
-.sb-f{height:100%;border-radius:999px;transition:width 1.1s ease .35s}
-.sv{font-size:.78rem;color:var(--cream);min-width:30px;text-align:right}
+.res-code{font-size:.72rem;letter-spacing:4px;color:var(--gold)}
+.res-name{font-family:'Black Han Sans',sans-serif;font-size:1.85rem;color:var(--white);line-height:1.2}
+.res-name span{color:var(--sage)}
+.res-desc{font-size:.89rem;line-height:1.78;color:var(--mint);text-align:left}
+.srow{display:flex;align-items:center;gap:8px;background:rgba(15,32,24,.4);border-radius:10px;padding:9px 12px;width:100%}
+.sl{font-size:.76rem;color:var(--sage);min-width:72px}
+.sb{flex:1;height:5px;background:rgba(107,184,128,.1);border-radius:999px;overflow:hidden}
+.sb-f{height:100%;border-radius:999px;transition:width 1.1s ease .3s}
+.sv{font-size:.76rem;color:var(--cream);min-width:28px;text-align:right}
 
-/* 처방전 */
-.rx-sec{width:100%;text-align:left}
-.rx-notice{background:rgba(200,150,90,.09);border:1px solid rgba(200,150,90,.26);border-radius:11px;padding:11px 14px;font-size:.79rem;color:var(--gold);line-height:1.6;margin-bottom:12px}
-.rx-ttl{font-size:.9rem;color:var(--gold);margin-bottom:10px;display:flex;align-items:center;gap:6px}
-.rxcard{background:rgba(45,90,61,.26);border:1.5px solid rgba(123,191,142,.11);border-radius:17px;padding:14px 15px;margin-bottom:9px;display:flex;flex-direction:column;gap:9px}
-.rx-top{display:flex;align-items:flex-start;gap:12px}
-.rx-ico{font-size:1.5rem;flex-shrink:0;margin-top:1px}
-.rx-info h4{font-size:.9rem;color:var(--white);margin-bottom:2px;font-weight:normal}
-.rx-info p{font-size:.76rem;color:var(--mint);opacity:.76;margin-bottom:4px}
-.tags{display:flex;flex-wrap:wrap;gap:4px}
-.tag{background:rgba(74,140,92,.18);border-radius:999px;padding:2px 9px;font-size:.68rem;color:var(--sage)}
-.vote-wrap{border-top:1px solid rgba(123,191,142,.08);padding-top:9px}
-.vote-row{display:flex;gap:6px}
-.vbtn{flex:1;background:transparent;border:1.5px solid rgba(123,191,142,.16);border-radius:999px;padding:8px 6px;font-family:'Gowun Dodum',serif;font-size:.77rem;cursor:pointer;transition:all .22s;display:flex;align-items:center;justify-content:center;gap:4px;color:var(--cream);white-space:nowrap}
-.vbtn:hover:not(:disabled){background:rgba(123,191,142,.09)}
-.vbtn:disabled{opacity:.42;cursor:default}
-.vbtn.v-yes{background:rgba(74,140,92,.25);border-color:var(--sage);color:var(--sage)}
-.vbtn.v-maybe{background:rgba(200,150,90,.18);border-color:var(--gold);color:var(--gold)}
-.vbtn.v-no{background:rgba(212,112,90,.16);border-color:#d4705a;color:#d4705a}
-.reason-wrap{background:rgba(26,58,42,.42);border-radius:10px;padding:9px 12px;margin-top:7px;animation:fu .3s ease}
-.reason-lbl{font-size:.74rem;color:var(--mint);opacity:.72;margin-bottom:6px}
-.reason-chips{display:flex;gap:5px;flex-wrap:wrap}
-.rchip{background:rgba(45,90,61,.38);border:1px solid rgba(123,191,142,.18);border-radius:999px;padding:4px 11px;font-size:.74rem;color:var(--mint);cursor:pointer;transition:all .2s}
-.rchip:hover{background:rgba(74,140,92,.18)}
-.rchip.picked{background:rgba(74,140,92,.26);border-color:var(--sage);color:var(--sage)}
-.reason-skip{font-size:.71rem;color:var(--sage);opacity:.52;cursor:pointer;text-decoration:underline;margin-top:5px;display:inline-block}
+/* 군 안내 */
+.group-notice{border-radius:14px;padding:13px 15px;width:100%;text-align:left;border:1px solid}
+.gn-title{font-family:'Black Han Sans',sans-serif;font-size:.88rem;margin-bottom:5px}
+.gn-body{font-size:.82rem;line-height:1.68}
+
+/* 큐레이션 */
+.rx-wrap{width:100%;text-align:left}
+.rx-lbl{font-size:.88rem;color:var(--gold);margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.rx-card{background:rgba(30,61,42,.28);border:1.5px solid rgba(107,184,128,.12);border-radius:16px;padding:13px 14px;margin-bottom:9px;display:flex;flex-direction:column;gap:8px}
+.rx-top{display:flex;align-items:flex-start;gap:11px}
+.rx-ico{font-size:1.45rem;flex-shrink:0;margin-top:1px}
+.rx-info h4{font-size:.88rem;color:var(--white);margin-bottom:2px;font-weight:normal}
+.rx-info p{font-size:.75rem;color:var(--mint);opacity:.75;margin-bottom:4px}
+.rx-tags{display:flex;flex-wrap:wrap;gap:4px}
+.rtag{background:rgba(58,122,80,.2);border-radius:999px;padding:2px 8px;font-size:.67rem;color:var(--sage)}
+.rx-msg{font-size:.78rem;color:var(--gold);opacity:.85;background:rgba(196,146,78,.1);border-radius:8px;padding:6px 10px;line-height:1.55}
+
+/* 지도 */
+#s-map{padding-top:24px}
+.map-container{position:relative;width:100%;background:rgba(10,25,15,.65);border:1px solid rgba(107,184,128,.1);border-radius:18px;overflow:hidden}
+.map-svg{width:100%;height:auto;display:block}
+.tip{position:absolute;background:rgba(15,32,24,.96);border:1px solid rgba(107,184,128,.3);border-radius:12px;padding:10px 13px;pointer-events:none;z-index:10;min-width:150px;opacity:0;transition:opacity .2s;font-size:.78rem;line-height:1.6;color:var(--mint)}
+.tip.vis{opacity:1}
+.leg{display:flex;flex-wrap:wrap;gap:6px;padding:10px 18px 4px}
+.li{display:flex;align-items:center;gap:5px;background:rgba(30,61,42,.3);border:1px solid rgba(107,184,128,.12);border-radius:999px;padding:4px 11px;font-size:.74rem;color:var(--mint);cursor:pointer;transition:all .2s}
+.li:hover{background:rgba(58,122,80,.18)}
+.li.hl{background:rgba(58,122,80,.28);border-color:var(--sage);color:var(--white)}
+.li-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:0 0 4px}
+.stat-card{background:rgba(30,61,42,.38);border-radius:12px;padding:10px;text-align:center;border:1px solid rgba(107,184,128,.1)}
+.sv2{font-family:'Black Han Sans',sans-serif;font-size:1.4rem;color:var(--white)}
+.sl2{font-size:.7rem;color:var(--sage);opacity:.7}
+
+/* 단계 버튼 hover */
+[id^="stage-btn-"]:hover { border-color: rgba(107,184,128,.4) !important; background: rgba(58,122,80,.18) !important; }
+
+/* 공유 */
 .share-row{display:flex;gap:8px;width:100%}
-.btn-share{flex:1;background:rgba(200,150,90,.13);border:1px solid rgba(200,150,90,.28);border-radius:999px;padding:10px;font-size:.8rem;color:var(--gold);cursor:pointer;transition:all .2s}
-.btn-share:hover{background:rgba(200,150,90,.22)}
-.others-lbl{font-size:.77rem;color:var(--sage);opacity:.62;align-self:flex-start}
-.others-row{display:flex;gap:6px;flex-wrap:wrap;width:100%}
-.oc{background:rgba(45,90,61,.24);border:1px solid rgba(123,191,142,.11);border-radius:10px;padding:6px 12px;font-size:.78rem;color:var(--mint);cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:4px}
-.oc:hover{background:rgba(74,140,92,.15);border-color:rgba(123,191,142,.28)}
+.btn-sh{flex:1;background:rgba(196,146,78,.14);border:1px solid rgba(196,146,78,.3);border-radius:999px;padding:10px;font-size:.79rem;color:var(--gold);cursor:pointer;transition:all .2s}
+.btn-sh:hover{background:rgba(196,146,78,.23)}
+.btn-map{background:rgba(74,168,165,.15);border:1px solid rgba(74,168,165,.3);border-radius:999px;padding:12px;font-family:'Black Han Sans',sans-serif;font-size:.88rem;color:var(--teal);cursor:pointer;transition:all .2s;width:100%;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-map:hover{background:rgba(74,168,165,.25)}
+.oth-lbl{font-size:.76rem;color:var(--sage);opacity:.6;align-self:flex-start}
+.oth-row{display:flex;gap:6px;flex-wrap:wrap;width:100%}
+.oc{background:rgba(30,61,42,.25);border:1px solid rgba(107,184,128,.12);border-radius:10px;padding:6px 12px;font-size:.77rem;color:var(--mint);cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:4px}
+.oc:hover{background:rgba(58,122,80,.18);border-color:rgba(107,184,128,.3)}
 </style>
 </head>
 <body>
 <div class="fbg" id="fbg"></div>
-<div class="app">
+<div class="app" style="position:relative;z-index:1">
 
-<!-- 랜딩 -->
-<div class="screen active" id="sl">
-  <div class="logo-tree">🌲</div>
-  <div class="logo-t">우리 숲</div>
-  <div class="logo-s">나의 회복 동물 찾기</div>
-  <div class="card" style="margin-bottom:14px;width:100%">
-    <div style="font-family:'Black Han Sans',sans-serif;font-size:1.12rem;color:var(--white);margin-bottom:7px">🌿 지금 내게 필요한 처방전은?</div>
-    <div style="font-size:.88rem;line-height:1.72;color:var(--mint);opacity:.88">20문항으로 나의 회복 방식과 에너지 상태를 알아봐요. 나만의 동물 유형을 찾고, 어떤 문화 프로그램이 나에게 맞는지 확인해봐요.</div>
+<!-- ══ 랜딩 ══ -->
+<div class="screen on" id="s-land">
+  <div class="tree-ico">🌲</div>
+  <div class="logo-main">우리 숲</div>
+  <div class="logo-sub">나의 회복 동물 찾기</div>
+  <div class="card" style="margin-bottom:12px;width:100%">
+    <div style="font-family:'Black Han Sans',sans-serif;font-size:1.1rem;color:var(--white);margin-bottom:7px">🌿 지금 나에게 맞는 문화 활동이 있어요</div>
+    <div style="font-size:.87rem;line-height:1.72;color:var(--mint);opacity:.9">16문항으로 나의 회복 방식을 알아봐요. 나만의 동물 유형을 찾고, 딱 맞는 문화 프로그램을 추천받아요.</div>
   </div>
-  <div class="a-row">
+  <div class="animal-row">
     <span class="a-chip">🦔 고슴도치</span><span class="a-chip">🦉 부엉이</span><span class="a-chip">🐺 늑대</span><span class="a-chip">🦅 독수리</span>
     <span class="a-chip">🐼 판다</span><span class="a-chip">🦋 나비</span><span class="a-chip">🐻 곰</span><span class="a-chip">🦦 수달</span>
   </div>
   <div class="consent">
-    <label>
-      <input type="checkbox" id="cc" onchange="document.getElementById('sb').disabled=!this.checked">
-      <span>이 테스트 결과는 <strong>고립·은둔 청년을 위한 문화예술 복지 연구</strong>에 익명으로 활용됩니다. 개인 식별 정보는 수집하지 않습니다.</span>
-    </label>
+    <label><input type="checkbox" id="ck" onchange="document.getElementById('sb-land').disabled=!this.checked">
+    <span>이 테스트 결과는 <strong>고립·은둔 청년을 위한 문화예술 복지 연구</strong>에 익명으로 활용됩니다. 개인 식별 정보는 수집하지 않습니다.</span></label>
   </div>
-  <button class="btn-p" id="sb" disabled onclick="go('si')">🌱 내 회복 동물 찾기 시작</button>
+  <button class="btn-p" id="sb-land" disabled onclick="go('s-info')">🌱 내 회복 동물 찾기 시작</button>
 </div>
 
-<!-- 기본 정보 -->
-<div class="screen" id="si" style="padding-top:40px;gap:16px">
+<!-- ══ 기본정보 ══ -->
+<div class="screen" id="s-info" style="padding-top:40px">
   <span class="badge">🪵 숲 입장 전</span>
-  <div class="sec-title">간단히 알려주세요 <span>🌿</span></div>
-  <div class="sec-desc">결과 분석과 지도 시각화에 사용돼요. 3가지만 골라주세요.</div>
+  <div style="font-family:'Black Han Sans',sans-serif;font-size:1.4rem;color:var(--white)">간단히 알려주세요 <span style="color:var(--sage)">🌿</span></div>
+  <div style="font-size:.86rem;color:var(--mint);opacity:.78">결과 분석과 지도 시각화에 사용돼요</div>
   <div class="sel-grid">
-    <div class="sw"><select id="sage" onchange="chkI()">
+    <div class="sw"><select id="i-age" onchange="chkInfo()">
       <option value="">나이대</option>
       <option value="1">만 19~22세</option><option value="2">만 23~26세</option>
       <option value="3">만 27~30세</option><option value="4">만 31~34세</option>
     </select></div>
-    <div class="sw"><select id="sreg" onchange="chkI()">
+    <div class="sw"><select id="i-region" onchange="chkInfo();updateDistrict()">
       <option value="">거주 시·도</option>
-      <option value="서울">서울특별시</option><option value="부산">부산광역시</option>
-      <option value="대구">대구광역시</option><option value="인천">인천광역시</option>
-      <option value="광주">광주광역시</option><option value="대전">대전광역시</option>
-      <option value="울산">울산광역시</option><option value="세종">세종특별자치시</option>
-      <option value="경기">경기도</option><option value="강원">강원특별자치도</option>
-      <option value="충북">충청북도</option><option value="충남">충청남도</option>
-      <option value="전북">전북특별자치도</option><option value="전남">전라남도</option>
-      <option value="경북">경상북도</option><option value="경남">경상남도</option>
-      <option value="제주">제주특별자치도</option>
+      <option>서울</option><option>부산</option><option>대구</option><option>인천</option>
+      <option>광주</option><option>대전</option><option>울산</option><option>세종</option>
+      <option>경기</option><option>강원</option><option>충북</option><option>충남</option>
+      <option>전북</option><option>전남</option><option>경북</option><option>경남</option><option>제주</option>
     </select></div>
-    <div class="sw full"><select id="sstat" onchange="chkI()">
+    <div class="sw full"><select id="i-district" onchange="chkInfo()"><option value="">시·군·구 선택</option></select></div>
+    <div class="sw full"><select id="i-status" onchange="chkInfo()">
       <option value="">요즘 나의 상황</option>
-      <option value="job">취업 준비 중</option>
-      <option value="work">직장인 (정규직·계약직)</option>
-      <option value="free">프리랜서 · 자영업</option>
-      <option value="study">학생 (대학·대학원)</option>
-      <option value="both">취업 준비 + 학업 병행</option>
-      <option value="rest">쉬고 있음 (구직 중단)</option>
-      <option value="care">육아 · 가사 전담</option>
-      <option value="etc">그 외</option>
+      <option value="job">취업 준비 중</option><option value="work">직장인 (정규직·계약직)</option>
+      <option value="free">프리랜서·자영업</option><option value="study">학생</option>
+      <option value="both">취업 준비+학업 병행</option><option value="rest">쉬고 있음</option>
+      <option value="care">육아·가사 전담</option><option value="etc">그 외</option>
     </select></div>
   </div>
-  <div class="nav-row">
-    <button class="btn-back" onclick="go('sl')">← 뒤로</button>
+  <div class="nav">
+    <button class="btn-back" onclick="go('s-land')">← 뒤로</button>
     <button class="btn-p" id="ib" disabled style="flex:2" onclick="startQ()">다음 →</button>
   </div>
 </div>
 
-<!-- Q1: S/G -->
-<div class="screen qsc" id="sq1">
+<!-- ══ Q1 에너지 ══ -->
+<div class="screen" id="s-q1" style="padding-top:26px">
   <div class="prog-w"><div class="prog-bg"><div class="prog-f" id="p1" style="width:0%"></div></div><span class="prog-t" id="pt1">0/4</span></div>
-  <span class="part-lbl">PART 1 · 혼자 vs 함께</span>
-  <div class="part-hdr"><h3>👥 어떤 방식이 더 편한가요?</h3><p>정답 없어요. 솔직한 느낌으로 골라주세요.</p></div>
-  <div id="q1c"></div>
-  <div class="nav-row">
-    <button class="btn-back" onclick="go('si')">← 뒤로</button>
-    <button class="btn-p" id="n1" disabled style="flex:2" onclick="go('sq2');renderQ(Q2,'q2c','p2','pt2','n2',A.qa)">다음 →</button>
+  <span class="sec-lbl">PART 1 · 에너지</span>
+  <div class="part-hdr"><h3>😴 요즘 어떤 상태예요?</h3><p>솔직하게 골라주세요. 정답 없어요.</p></div>
+  <div id="qc1"></div>
+  <div class="nav"><button class="btn-back" onclick="go('s-info')">← 뒤로</button>
+  <button class="btn-p" id="n1" disabled style="flex:2" onclick="go('s-q2');renderQ(Q2,'qc2','p2','pt2','n2',A.q2)">다음 →</button></div>
+</div>
+
+<!-- ══ Q2 활동시간 ══ -->
+<div class="screen" id="s-q2" style="padding-top:26px">
+  <div class="prog-w"><div class="prog-bg"><div class="prog-f" id="p2" style="width:0%"></div></div><span class="prog-t" id="pt2">0/2</span></div>
+  <span class="sec-lbl">PART 2 · 활동 시간</span>
+  <div class="part-hdr"><h3>🌙 언제 외출하기 편해요?</h3><p>가장 편안한 나의 패턴을 골라주세요.</p></div>
+  <div id="qc2"></div>
+  <div class="nav"><button class="btn-back" onclick="go('s-q1')">← 뒤로</button>
+  <button class="btn-p" id="n2" disabled style="flex:2" onclick="go('s-q3');renderQ(Q3,'qc3','p3','pt3','n3',A.q3)">다음 →</button></div>
+</div>
+
+<!-- ══ Q3 사회성 ══ -->
+<div class="screen" id="s-q3" style="padding-top:26px">
+  <div class="prog-w"><div class="prog-bg"><div class="prog-f" id="p3" style="width:0%"></div></div><span class="prog-t" id="pt3">0/4</span></div>
+  <span class="sec-lbl">PART 3 · 사회성</span>
+  <div class="part-hdr"><h3>👥 혼자가 편해요, 함께가 좋아요?</h3><p>요즘 나의 진짜 모습으로 골라주세요.</p></div>
+  <div id="qc3"></div>
+  <div class="nav"><button class="btn-back" onclick="go('s-q2')">← 뒤로</button>
+  <button class="btn-p" id="n3" disabled style="flex:2" onclick="go('s-q4');renderQ(Q4,'qc4','p4','pt4','n4',A.q4)">다음 →</button></div>
+</div>
+
+<!-- ══ Q4 맞춤조건 ══ -->
+<div class="screen" id="s-q4" style="padding-top:26px">
+  <div class="prog-w"><div class="prog-bg"><div class="prog-f" id="p4" style="width:0%"></div></div><span class="prog-t" id="pt4">0/3</span></div>
+  <span class="sec-lbl">PART 4 · 맞춤 조건</span>
+  <div class="part-hdr"><h3>📍 어떤 조건이 편해요?</h3><p>실제 참여 가능한 현실적인 조건이에요.</p></div>
+  <div id="qc4"></div>
+  <div class="nav"><button class="btn-back" onclick="go('s-q3')">← 뒤로</button>
+  <button class="btn-p" id="n4" disabled style="flex:2" onclick="go('s-q5');renderQ(Q5,'qc5','p5','pt5','n5',A.q5)">다음 →</button></div>
+</div>
+
+<!-- ══ Q5 자극 ══ -->
+<div class="screen" id="s-q5" style="padding-top:26px">
+  <div class="prog-w"><div class="prog-bg"><div class="prog-f" id="p5" style="width:0%"></div></div><span class="prog-t" id="pt5">0/3</span></div>
+  <span class="sec-lbl">PART 5 · 문화예술 선호도</span>
+  <div class="part-hdr"><h3>🎨 어떤 문화생활이 끌려요?</h3><p>마지막 파트예요!</p></div>
+  <div id="qc5"></div>
+  <div class="nav"><button class="btn-back" onclick="go('s-q4')">← 뒤로</button>
+  <button class="btn-p" id="n5" disabled style="flex:2" onclick="doLoad()">결과 보기 🌲</button></div>
+</div>
+
+<!-- ══ 로딩 ══ -->
+<div class="screen" id="s-load">
+  <div class="load-a" id="la">🌿</div>
+  <div class="load-t">숲에서 당신의 동물을 찾는 중<span class="dots"><span>.</span><span>.</span><span>.</span></span></div>
+  <div class="load-bg"><div class="load-fill"></div></div>
+</div>
+
+<!-- ══ 결과 ══ -->
+<div class="screen" id="s-res">
+  <div class="res-glow"><div class="res-em" id="re">🦔</div></div>
+  <div class="res-code" id="rc">PSF</div>
+  <div class="res-name" id="rn">새벽 <span>고슴도치</span></div>
+  <div class="card" style="width:100%"><p class="res-desc" id="rd"></p></div>
+  <div style="width:100%;display:flex;flex-direction:column;gap:6px" id="rbars"></div>
+  <div class="group-notice" id="gnotice" style="display:none"></div>
+  <!-- 회복 단계 선택 -->
+  <div id="stage-wrap" style="display:none;width:100%;text-align:left">
+    <div style="font-size:.86rem;color:var(--gold);margin-bottom:10px;display:flex;align-items:center;gap:6px">🌱 회복 여정 — 어떤 단계를 목표로 할까요?</div>
+    <div id="stage-steps" style="display:flex;flex-direction:column;gap:7px;margin-bottom:14px"></div>
   </div>
-</div>
-
-<!-- Q2: Q/A -->
-<div class="screen qsc" id="sq2">
-  <div class="prog-w"><div class="prog-bg"><div class="prog-f" id="p2" style="width:0%"></div></div><span class="prog-t" id="pt2">0/3</span></div>
-  <span class="part-lbl">PART 2 · 정적 vs 동적</span>
-  <div class="part-hdr"><h3>🏃 쉴 때 어떻게 쉬는 편인가요?</h3><p>가장 자연스러운 내 모습을 골라주세요.</p></div>
-  <div id="q2c"></div>
-  <div class="nav-row">
-    <button class="btn-back" onclick="go('sq1')">← 뒤로</button>
-    <button class="btn-p" id="n2" disabled style="flex:2" onclick="go('sq3');renderQ(Q3,'q3c','p3','pt3','n3',A.re)">다음 →</button>
-  </div>
-</div>
-
-<!-- Q3: R/E -->
-<div class="screen qsc" id="sq3">
-  <div class="prog-w"><div class="prog-bg"><div class="prog-f" id="p3" style="width:0%"></div></div><span class="prog-t" id="pt3">0/5</span></div>
-  <span class="part-lbl">PART 3 · 요즘 에너지 상태</span>
-  <div class="part-hdr"><h3>💤 지금 나는 얼마나 충전되어 있을까?</h3><p>맞다 틀리다가 없어요. 요즘 솔직한 상태를 골라주세요.</p></div>
-  <div id="q3c"></div>
-  <div class="nav-row">
-    <button class="btn-back" onclick="go('sq2')">← 뒤로</button>
-    <button class="btn-p" id="n3" disabled style="flex:2" onclick="go('sq4');renderQ(Q4,'q4c','p4','pt4','n4',A.cond)">다음 →</button>
-  </div>
-</div>
-
-<!-- Q4: 조건 -->
-<div class="screen qsc" id="sq4">
-  <div class="prog-w"><div class="prog-bg"><div class="prog-f" id="p4" style="width:0%"></div></div><span class="prog-t" id="pt4">0/4</span></div>
-  <span class="part-lbl">PART 4 · 맞춤 추천 조건</span>
-  <div class="part-hdr"><h3>🗺️ 마지막 4가지만 알려주세요</h3><p>실제 참여 가능한 조건이에요.</p></div>
-  <div id="q4c"></div>
-  <div class="nav-row">
-    <button class="btn-back" onclick="go('sq3')">← 뒤로</button>
-    <button class="btn-p" id="n4" disabled style="flex:2" onclick="doLoad()">결과 보기 🌲</button>
-  </div>
-</div>
-
-<!-- 로딩 -->
-<div class="screen" id="sload">
-  <div class="la" id="la">🌿</div>
-  <div class="lt">숲에서 당신의 동물을 찾는 중<span class="dots"><span>.</span><span>.</span><span>.</span></span></div>
-  <div class="lbar-bg"><div class="lbar-f"></div></div>
-</div>
-
-<!-- 결과 -->
-<div class="screen" id="sres">
-  <div class="rg"><div class="re" id="re">🦔</div></div>
-  <div class="rc" id="rc">SQR</div>
-  <div class="rn" id="rn">새벽 <span>고슴도치</span></div>
-  <div class="card" style="width:100%"><p class="rd" id="rd"></p></div>
-  <div style="width:100%;display:flex;flex-direction:column;gap:7px" id="rbars"></div>
-  <div class="rx-sec">
-    <div class="rx-notice">
-      💡 아래 프로그램들은 예시예요. 프로젝트 완성 후 실제 지역 프로그램을 맞춤 추천해드릴 예정이에요.<br>각 프로그램에 대한 솔직한 반응을 알려주시면 더 나은 추천을 만드는 데 큰 도움이 돼요!
-    </div>
-    <div class="rx-ttl">📋 예시 처방전 — 반응을 알려주세요</div>
+  <div class="rx-wrap">
+    <div class="rx-lbl" id="rx-lbl">✨ 나만의 문화 큐레이션</div>
     <div id="rxlist"></div>
   </div>
+  <button class="btn-map" onclick="go('s-map');renderMap()">🗺️ 우리 숲 지도 보기 — 다른 동물들은 어디에?</button>
   <div class="share-row">
-    <button class="btn-share" onclick="doShare()">📤 공유하기</button>
-    <button class="btn-share" onclick="go('sl');resetAll()">🔄 다시 하기</button>
+    <button class="btn-sh" onclick="doShare()">📤 공유하기</button>
+    <button class="btn-sh" onclick="go('s-land');resetAll()">🔄 다시 하기</button>
   </div>
-  <div class="others-lbl">다른 동물 유형 탐색하기</div>
-  <div class="others-row" id="others"></div>
+  <div class="oth-lbl">다른 동물 유형 탐색하기</div>
+  <div class="oth-row" id="others"></div>
 </div>
 
+<!-- ══ 지도 ══ -->
+<div class="screen" id="s-map" style="padding-top:24px">
+  <span class="badge">🗺️ 우리 숲 지도</span>
+  <div style="font-family:'Black Han Sans',sans-serif;font-size:1.3rem;color:var(--white)">전국 회복 동물 분포</div>
+  <div class="stats-grid" id="mapstats"></div>
+  <div class="map-container">
+    <svg class="map-svg" viewBox="0 0 400 490" xmlns="http://www.w3.org/2000/svg" id="mapsvg">
+      <g id="gridlines"></g><g id="regions"></g>
+    </svg>
+    <div class="tip" id="tip"></div>
+  </div>
+  <div class="leg" id="mapleg"></div>
+  <button class="btn-back" style="align-self:flex-start;margin-top:4px" onclick="go('s-res')">← 내 결과로</button>
 </div>
+
+</div><!-- /app -->
+
 <script>
-const TYPES={
-  SQR:{emoji:'🦔',name:'새벽 고슴도치',color:'#7bbf8e',
-    desc:'조용히, 혼자, 내 속도로 회복하는 타입이에요. 지금 조금 지쳐있지만 분명 회복할 수 있어요. 고슴도치가 새벽에 조심스레 굴 밖으로 나오듯, 나만의 시간이 필요해요.',
-    rx:[{ico:'🌙',name:'국립현대미술관 야간개장',info:'서울 종로구 · 무료~3,000원 · 화~일 18:00~21:00',tags:['1인 OK','실내','저녁'],id:'p1'},{ico:'🌲',name:'산림청 치유의 숲 명상 산책',info:'전국 각지 · 무료 · 1~2시간 코스',tags:['1인 OK','자연','무료'],id:'p2'},{ico:'📚',name:'국립중앙도서관 독서치유 프로그램',info:'서울 서초구 · 무료 · 사전 신청',tags:['1인 OK','실내','무료'],id:'p3'}]},
-  SQE:{emoji:'🦉',name:'숲속 부엉이',color:'#c8965a',
-    desc:'혼자 조용히 있는 걸 좋아하지만 에너지는 충분해요. 남들이 쉬는 시간에도 눈빛이 빛나는 타입이에요.',
-    rx:[{ico:'📖',name:'독립서점 북토크 이벤트',info:'전국 독립서점 · 무료~10,000원 · 저녁',tags:['소그룹 OK','실내','저녁'],id:'p4'},{ico:'🖼️',name:'대안공간 소규모 사진 전시',info:'서울 홍대·합정 · 무료 · 상시',tags:['1인 OK','감상','무료'],id:'p5'},{ico:'✏️',name:'드로잉 원데이 클래스',info:'전국 공방 · 15,000~25,000원 · 주말',tags:['1인 OK','창작','주말'],id:'p6'}]},
-  SAR:{emoji:'🐺',name:'외로운 늑대',color:'#8facd4',
-    desc:'혼자 움직이고 싶은 마음은 있지만 지금은 좀 쉬고 싶어요. 지금 충전만 하면 곧 다시 달릴 수 있어요.',
-    rx:[{ico:'🏛️',name:'국립민속박물관 상설 관람',info:'서울 종로구 · 무료 · 상시',tags:['1인 OK','실내','무료'],id:'p7'},{ico:'📷',name:'도시 포토워크',info:'전국 도심 · 무료 · 자유 시간',tags:['1인 OK','야외','무료'],id:'p8'},{ico:'🌿',name:'국립수목원 산림치유 체험',info:'경기 포천 · 1,000원 · 주말',tags:['1인 OK','자연','저렴'],id:'p9'}]},
-  SAE:{emoji:'🦅',name:'자유 독수리',color:'#d4a847',
-    desc:'혼자지만 활발하게 탐험하는 타입이에요. 경계 없이 새로운 것에 뛰어드는 에너지가 있어요.',
-    rx:[{ico:'🧗',name:'실내 클라이밍 입문 체험',info:'전국 · 15,000~25,000원',tags:['1인 OK','활동','실내'],id:'p10'},{ico:'🚴',name:'자전거 문화재 탐방',info:'각 지자체 · 무료 · 반나절',tags:['1인 OK','야외','무료'],id:'p11'},{ico:'🎭',name:'거리 문화 공연 탐방',info:'전국 문화의거리 · 무료 · 주말 저녁',tags:['1인 OK','감상','야외'],id:'p12'}]},
-  GQR:{emoji:'🐼',name:'지친 판다',color:'#9eb8d4',
-    desc:'사람은 좋은데 지금은 조금 힘들어요. 작은 연결로 천천히 시작해봐요.',
-    rx:[{ico:'🍵',name:'전통 다례 체험 (소그룹)',info:'전국 한옥 체험관 · 15,000원 · 3~5인',tags:['소그룹','실내','힐링'],id:'p13'},{ico:'🎬',name:'야외영화 상영회',info:'전국 · 무료 · 주말',tags:['소그룹','야외','무료'],id:'p14'},{ico:'🎭',name:'소극장 연극 관람',info:'전국 소극장 · 10,000~20,000원',tags:['소그룹','감상','저녁'],id:'p15'}]},
-  GQE:{emoji:'🦋',name:'봄날 나비',color:'#c4a8d4',
-    desc:'소그룹과 함께 여유롭게 쉬는 타입이에요. 자연스러운 연결 속에서 회복돼요.',
-    rx:[{ico:'🖋️',name:'캘리그라피 원데이 클래스',info:'전국 공방 · 20,000원 · 5~6인',tags:['소그룹','창작','주말'],id:'p16'},{ico:'🎻',name:'예술의전당 소규모 클래식 살롱',info:'서울 서초구 · 청년 할인 10,000~20,000원',tags:['소그룹','감상','저녁'],id:'p17'},{ico:'📚',name:'지역 독립서점 북클럽',info:'전국 · 무료~5,000원 · 월 1회',tags:['소그룹','실내','저녁'],id:'p18'}]},
-  GAR:{emoji:'🐻',name:'졸린 곰',color:'#c4945a',
-    desc:'함께하고 싶은 마음은 있지만 에너지를 충전 중이에요. 부담 없는 그룹 활동으로 천천히 시작해봐요.',
-    rx:[{ico:'🍳',name:'소그룹 쿠킹 클래스',info:'전국 · 30,000원 · 5~6인',tags:['소그룹','창작','주말'],id:'p19'},{ico:'🎲',name:'보드게임 카페 소모임',info:'전국 · 6,000~8,000원 · 저녁',tags:['소그룹','실내','저녁'],id:'p20'},{ico:'🎪',name:'지역 청년 야외 문화행사',info:'각 지자체 · 무료 · 주말',tags:['소그룹','야외','무료'],id:'p21'}]},
-  GAE:{emoji:'🦦',name:'햇살 수달',color:'#5aacaa',
-    desc:'함께할 때 제일 빛나는 활동형이에요! 역동적인 그룹 활동이 딱이에요.',
-    rx:[{ico:'💃',name:'K-댄스 소셜 클래스',info:'전국 · 15,000~20,000원 · 저녁',tags:['그룹','활동','저녁'],id:'p22'},{ico:'🌱',name:'그룹 플로깅',info:'전국 러닝 클럽 · 무료 · 주말 아침',tags:['그룹','야외','무료'],id:'p23'},{ico:'🥁',name:'난타 체험 클래스',info:'전국 · 20,000원 · 소그룹',tags:['소그룹','창작','주말'],id:'p24'}]},
+// ══════════════════════════════════
+// 동물 유형 데이터
+// ══════════════════════════════════
+const TYPES = {
+  PSF:{emoji:'🦔',name:'새벽 고슴도치',color:'#6bb880',
+    desc:'조용히 혼자, 익숙한 것 속에서 회복하는 타입이에요. 가시를 내릴 수 있는 나만의 공간과 페이스가 필요해요.'},
+  PSE:{emoji:'🦉',name:'숲속 부엉이',color:'#c4924e',
+    desc:'혼자지만 새로운 것을 탐험하는 타입이에요. 남들이 쉬는 시간, 혼자 깊이 빠져드는 것에서 에너지를 얻어요.'},
+  PTF:{emoji:'🐼',name:'봄날 판다',color:'#9eb8d4',
+    desc:'소그룹과 함께 익숙한 것을 즐기는 타입이에요. 편안한 연결 속에서 서서히 충전돼요.'},
+  PTE:{emoji:'🦋',name:'봄날 나비',color:'#c4a8d4',
+    desc:'함께 새로운 것을 탐험하는 타입이에요. 자연스러운 만남 속에서 나비처럼 가볍게 날아올라요.'},
+  ASF:{emoji:'🐺',name:'새벽 늑대',color:'#8facd4',
+    desc:'혼자 활발하게 움직이는 타입이에요. 자기만의 길을 달리며 익숙한 루틴 속에서 자유를 느껴요.'},
+  ASE:{emoji:'🦅',name:'자유 독수리',color:'#d4a847',
+    desc:'혼자, 활발하게, 새로운 곳을 탐험하는 타입이에요. 경계 없이 높이 날아오르는 에너지가 있어요.'},
+  ATF:{emoji:'🐻',name:'따뜻한 곰',color:'#c4945a',
+    desc:'함께 활동하고 익숙한 것에서 편안함을 느끼는 타입이에요. 든든한 존재감으로 주변을 따뜻하게 해요.'},
+  ATE:{emoji:'🦦',name:'햇살 수달',color:'#4aa8a5',
+    desc:'함께할 때 제일 빛나는 활동형이에요. 새로운 것도 겁나지 않고, 주변까지 즐겁게 만드는 에너지가 있어요.'},
 };
 
-// ─── 문항 데이터 ───────────────────────────────
-const Q1=[
-  {id:'sg1',txt:'주말 자유 시간, 가장 먼저 떠오르는 건?',
-   hint:'"편함" 기준으로 솔직하게',
-   ch:['집에서 혼자 (영상·책·음악)','혼자 밖으로 (카페·산책 등)','한 명이랑 조용히 (카페·대화)','한 명이랑 활발하게 (맛집·쇼핑 등)','소그룹(3~5명)이랑 뭔가','여러 사람들과 활발히'],
-   map:[1,2,3,3,4,5]},
-  {id:'sg2',txt:'처음 보는 사람들이 있는 공간에 들어가야 한다면?',
-   ch:['생각만 해도 피곤하다','조금 불편하다','크게 신경 안 쓰인다','괜찮다, 익숙하다','오히려 설렌다']},
-  // ★ 변경: 편함 → 에너지 충전 프레임
-  {id:'sg3',
-   changed:true,
-   txt:'취미 활동을 마친 후, 어떨 때 더 에너지가 충전된 느낌인가요?',
-   hint:'인트로버트는 혼자 있을 때, 엑스트로버트는 함께할 때 재충전돼요',
-   ch:['혼자 했을 때 확실히 더 충전된다','혼자지만 주변에 사람 있는 환경이 좋다 (카페 등)','혼자든 같이든 별 차이 없다','가끔 같이하는 게 있을 때 더 충전된다','함께했을 때 확실히 더 충전된다']},
-  {id:'sg4',txt:'활동 중 다른 참여자와 대화·협력이 필요하다면?',
-   ch:['최대한 피하고 싶다','최소한만 하고 싶다','상관없다','그것도 재밌을 것 같다','오히려 좋다']},
-];
-const Q2=[
-  {id:'qa1',txt:'에너지가 없을 때 나만의 충전 방식은?',
-   ch:['아무것도 안 하고 가만히 있기','조용한 음악·영화·전시 감상','가벼운 산책이나 걷기','적당한 운동이나 신체 활동','사람들과 활발하게 어울리기']},
-  // ★ 변경: "오후 시간" 특정 제거 → 시간 중립적으로
-  {id:'qa2',
-   changed:true,
-   txt:'자유 시간이 생겼을 때 가장 자연스럽게 끌리는 활동은?',
-   hint:'특정 시간대 상관없이, 몸의 움직임 기준으로',
-   ch:['전시·영화·공연 앉아서 감상','도예·그림·글쓰기 등 만들기','동네 산책하며 사진 찍기','조깅·스트레칭·가벼운 스포츠','댄스·클라이밍 등 활동적인 것']},
-  {id:'qa3',txt:'몸을 활발하게 움직이는 활동은?',
-   ch:['생각만 해도 피곤하다','별로 안 내킨다','상황에 따라 다르다','좋아하는 편이다','아주 좋아한다']},
-];
-const Q3=[
-  {id:'re1',txt:'아침에 일어났을 때 나의 기분은?',ch:['다시 눕고 싶다','별 감흥이 없다','그냥 보통이다','오늘 뭔가 해볼까 싶다','오늘 하루가 기대된다']},
-  {id:'re2',txt:'일·학업을 제외하고, 나 자신을 위한 외출 빈도는?',hint:'퇴근·등교 같은 의무적 외출 제외',ch:['거의 없다 (주 1회 미만)','가끔 있다 (주 1~2회)','보통이다 (주 3~4회)','꽤 자주 있다','매일 나가고 싶다']},
-  {id:'re3',txt:'최근 한 달간 설레거나 기대됐던 순간이?',ch:['전혀 없었다','딱 한 번 있었나…','가끔 있었다','꽤 자주 있었다','많았다']},
-  {id:'re4',txt:'"어디 나가서 뭔가 해볼까"라는 생각이 드나요?',ch:['전혀 없다, 귀찮다','생각은 하지만 몸이 안 따른다','조금 있다','있고 실제로 찾아보기도 한다','지금 당장 뭔가 하고 싶다']},
-  {id:'re5',txt:'일·학업 외의 사람들과 대화가?',ch:['거의 없다','가족하고만 한다','가끔 친구·지인과 한다','꽤 자주 한다','매일 다양하게 한다']},
-];
-const Q4=[
-  {id:'c1',txt:'이동 가능한 거리는?',hint:'편도 기준',ch:['걸어서 10분 이내','대중교통 20분 이내','30분 이내','1시간 이내','상관없어요']},
-  {id:'c2',txt:'1회 참여 예산은?',ch:['무료만 가능','1만원 이하','3만원 이하','5만원 이하','상관없어요']},
-  {id:'c3',txt:'선호하는 활동 시간대는?',ch:['오전 (~12시)','오후 (12~18시)','저녁 (18시 이후)','주말만 가능','상관없어요']},
-  {id:'c4',txt:'편한 공간은?',ch:['실내 (카페·공방·도서관 등)','실외 (공원·자연 등)','상관없어요']},
+// ══════════════════════════════════
+// 동물 × 군 상태 매핑
+// ══════════════════════════════════
+const ANIMAL_STATES = {
+  PSF:{
+    cli:{name:'고치 속 고슴도치',emoji:'🐛',desc:'아무것도 느껴지지 않아요. 가시도 세울 힘이 없어요.'},
+    mix:{name:'숨어버린 고슴도치',emoji:'🌧️',desc:'에너지도 없고 사람도 무서워요. 완전히 웅크렸어요.'},
+    burn:{name:'지친 고슴도치',emoji:'💤',desc:'구석에서 쉬고 싶어요. 움직일 에너지가 없어요.'},
+    isol:{name:'가시 세운 고슴도치',emoji:'🌿',desc:'가까이 오지 마세요. 연결이 두렵지만 사실 외로워요.'},
+    norm:{name:'새벽 고슴도치',emoji:'☀️',desc:'나만의 리듬과 공간이 있어요. 조용히 충전 중이에요.'},
+  },
+  PSE:{
+    cli:{name:'어두운 부엉이',emoji:'🐛',desc:'밤하늘도 보이지 않아요. 모든 것이 무감각해요.'},
+    mix:{name:'웅크린 부엉이',emoji:'🌧️',desc:'날고 싶지만 날개가 말을 안 들어요.'},
+    burn:{name:'졸린 부엉이',emoji:'💤',desc:'새로운 걸 탐구하고 싶은데 눈이 감겨요.'},
+    isol:{name:'외로운 부엉이',emoji:'🌿',desc:'혼자 탐험하고 싶은데 낯선 것이 두려워졌어요.'},
+    norm:{name:'숲속 부엉이',emoji:'☀️',desc:'밤새 혼자 새로운 것을 탐구해요. 충만해요.'},
+  },
+  PTF:{
+    cli:{name:'고립된 판다',emoji:'🐛',desc:'대나무 숲에 홀로 남겨진 느낌이에요.'},
+    mix:{name:'지친 판다',emoji:'🌧️',desc:'무리에서 멀어졌고, 다시 돌아갈 힘도 없어요.'},
+    burn:{name:'겨울잠 판다',emoji:'💤',desc:'함께하고 싶지만 에너지가 없어요.'},
+    isol:{name:'혼자인 판다',emoji:'🌿',desc:'무리가 그립지만 가까이 가기가 무서워요.'},
+    norm:{name:'봄날 판다',emoji:'☀️',desc:'소그룹과 익숙한 곳에서 천천히 충전돼요.'},
+  },
+  PTE:{
+    cli:{name:'굳어버린 나비',emoji:'🐛',desc:'날개가 굳어 꿈쩍도 않아요.'},
+    mix:{name:'비 맞은 나비',emoji:'🌧️',desc:'날개가 무겁고 사람도 무서워요.'},
+    burn:{name:'날개 접은 나비',emoji:'💤',desc:'날고 싶지만 힘이 없어요.'},
+    isol:{name:'홀로 나비',emoji:'🌿',desc:'꽃 사이를 혼자 맴돌아요. 다가가기 두려워요.'},
+    norm:{name:'봄날 나비',emoji:'☀️',desc:'꽃에서 꽃으로, 자유롭게 날아요.'},
+  },
+  ASF:{
+    cli:{name:'상처입은 늑대',emoji:'🐛',desc:'달리는 법을 잊어버린 것 같아요.'},
+    mix:{name:'쓰러진 늑대',emoji:'🌧️',desc:'달리고도 싶고 외롭기도 한데 아무것도 할 수 없어요.'},
+    burn:{name:'지친 늑대',emoji:'💤',desc:'달리고 싶은데 발이 무거워요.'},
+    isol:{name:'고립된 늑대',emoji:'🌿',desc:'혼자 달리지만 점점 외로워요.'},
+    norm:{name:'새벽 늑대',emoji:'☀️',desc:'나만의 길을 혼자 달려요. 자유롭고 충만해요.'},
+  },
+  ASE:{
+    cli:{name:'날지 못하는 독수리',emoji:'🐛',desc:'날개를 잊어버린 것 같아요.'},
+    mix:{name:'추락하는 독수리',emoji:'🌧️',desc:'날고 싶은데 힘도 없고 낯선 하늘이 두려워요.'},
+    burn:{name:'쉬는 독수리',emoji:'💤',desc:'하늘을 날고 싶은데 오늘은 쉬어야 할 것 같아요.'},
+    isol:{name:'갇힌 독수리',emoji:'🌿',desc:'새로운 영역이 두려워졌어요.'},
+    norm:{name:'자유 독수리',emoji:'☀️',desc:'경계 없이 새로운 세계를 탐험해요.'},
+  },
+  ATF:{
+    cli:{name:'깊은 잠의 곰',emoji:'🐛',desc:'봄이 와도 깨지 않을 것 같아요.'},
+    mix:{name:'지쳐서 잠든 곰',emoji:'🌧️',desc:'따뜻하게 있고 싶은데 에너지도 없고 사람도 무서워요.'},
+    burn:{name:'겨울잠 곰',emoji:'💤',desc:'다들 좋지만 지금은 혼자 쉬고 싶어요.'},
+    isol:{name:'외로운 곰',emoji:'🌿',desc:'무리가 그립지만 선뜻 다가가지 못하고 있어요.'},
+    norm:{name:'따뜻한 곰',emoji:'☀️',desc:'함께 있을 때 가장 든든해요.'},
+  },
+  ATE:{
+    cli:{name:'가라앉는 수달',emoji:'🐛',desc:'헤엄치는 법을 잊어버렸어요.'},
+    mix:{name:'비 맞은 수달',emoji:'🌧️',desc:'놀고 싶은데 에너지도 없고 사람도 무서워요.'},
+    burn:{name:'지친 수달',emoji:'💤',desc:'신나게 놀고 싶은데 오늘은 물 밖에서 쉬고 싶어요.'},
+    isol:{name:'혼자인 수달',emoji:'🌿',desc:'신나게 놀고 싶은데 함께할 친구가 없어요.'},
+    norm:{name:'햇살 수달',emoji:'☀️',desc:'함께 신나게 탐험해요. 주변까지 즐겁게 만드는 에너지가 있어요.'},
+  },
+};
+
+// 군 회복 경로 순서 (심각 → 건강)
+const GROUP_PATH = {cli:['mix','burn','isol','norm'],mix:['burn','isol','norm'],burn:['isol','norm'],isol:['norm'],norm:[]};
+const GROUP_NEXT = {cli:'mix',mix:'burn',burn:'isol',isol:'norm',norm:null};
+
+
+// ══════════════════════════════════
+// 군 정보
+// ══════════════════════════════════
+const GROUP_INFO = {
+  cli:{
+    emoji:'🌱', label:'회복 진행 중',
+    color:'#c44a4a', bg:'rgba(196,74,74,.1)', border:'rgba(196,74,74,.3)',
+    msg:'요즘 많이 지쳐있는 것 같아요. 문화 활동도 좋지만, 전문 상담을 함께 받으면 더 빠르게 회복할 수 있어요.',
+    hotline:'정신건강 위기상담 전화: 1577-0199 (24시간)',
+    filter: p => p.energy <= 1,
+    tip: '에너지 소모 적은 것부터, 집에서도 가능한 것 위주로 추천해요'
+  },
+  burn:{
+    emoji:'💤', label:'에너지 충전 필요',
+    color:'#c4924e', bg:'rgba(196,146,78,.1)', border:'rgba(196,146,78,.3)',
+    msg:'지금 많이 소진된 상태예요. 억지로 에너지 쓰지 않아도 되는 것들로 시작해봐요.',
+    filter: p => p.energy <= 2 && !p.reservation && p.duration <= 90,
+    tip: '짧고, 가깝고, 예약 없이 가능한 것 위주예요'
+  },
+  isol:{
+    emoji:'🌿', label:'나만의 속도로',
+    color:'#4aa8a5', bg:'rgba(74,168,165,.1)', border:'rgba(74,168,165,.3)',
+    msg:'말 안 해도 되는 공간, 혼자 가도 이상하지 않은 활동들로 골라봤어요.',
+    filter: p => !p.forced_interaction && p.solo_ok,
+    tip: '강제 상호작용 없고, 혼자 참여 가능한 것들이에요'
+  },
+  mix:{
+    emoji:'🌧️', label:'조심스러운 첫 발걸음',
+    color:'#8a5ac8', bg:'rgba(138,90,200,.1)', border:'rgba(138,90,200,.3)',
+    msg:'에너지도 적고 사람도 부담스러운 지금, 정말 작은 것부터 시작해봐요.',
+    filter: p => p.energy <= 1 && !p.forced_interaction && p.solo_ok,
+    tip: '가장 부담 없는 것들로 골랐어요'
+  },
+  norm:{
+    emoji:'☀️', label:'성향대로 즐기기',
+    color:'#6bb880', bg:'rgba(107,184,128,.1)', border:'rgba(107,184,128,.3)',
+    msg:'지금 상태 좋아요! 성향에 맞는 것들로 골라봤어요.',
+    filter: p => true,
+    tip: '취향에 맞는 프로그램들이에요'
+  }
+};
+
+// ══════════════════════════════════
+// 프로그램 DB
+// ══════════════════════════════════
+const PROGRAMS = [
+  {id:'p01',emoji:'🌙',name:'야간 미술관 관람',info:'전국 국공립 미술관 · 무료~3,000원 · 저녁',
+   tags:['정적','실내'],activity:'P',social:'S',stimulus:'F',energy:1,forced_interaction:false,solo_ok:true,reservation:false,duration:60,
+   msg:{cli:'집에서 온라인 가상 투어로 먼저 시작해봐요',burn:'평일 저녁 사람 적을 때 천천히 혼자',isol:'혼자 가도 되고 말 한마디 안 해도 돼요',mix:'아무도 신경 안 써요, 내 속도로'}},
+  {id:'p02',emoji:'🌲',name:'치유의 숲 명상 산책',info:'전국 각지 · 무료 · 1~2시간 코스',
+   tags:['정적','야외'],activity:'P',social:'S',stimulus:'F',energy:1,forced_interaction:false,solo_ok:true,reservation:false,duration:90,
+   msg:{cli:'집 근처 공원 산책부터 시작해봐요',burn:'조용히 걷기만 해도 충분해요',isol:'아무도 없는 이른 아침 추천해요',mix:'바람 맞으며 걷는 것만으로도 달라져요'}},
+  {id:'p03',emoji:'📚',name:'도서관 독서치유 프로그램',info:'국립중앙도서관 외 · 무료 · 사전 신청',
+   tags:['정적','실내'],activity:'P',social:'S',stimulus:'F',energy:1,forced_interaction:false,solo_ok:true,reservation:true,duration:60,
+   msg:{cli:'집에서 책 한 권 읽는 것부터 시작해도 돼요',burn:'뇌가 쉬면서 위로받는 방법이에요',isol:'조용히 책만 읽어도 되는 공간이에요',mix:'말 한마디 없이도 충분히 의미 있어요'}},
+  {id:'p04',emoji:'📷',name:'도시 포토워크',info:'전국 도심 · 무료 · 자유 시간',
+   tags:['동적','야외'],activity:'A',social:'S',stimulus:'E',energy:2,forced_interaction:false,solo_ok:true,reservation:false,duration:120,
+   msg:{cli:'집 앞 골목 사진 찍기부터 시작해봐요',burn:'걷다 보면 어느새 충전돼 있을 거예요',isol:'혼자 걷고 찍으며 내 리듬대로',mix:'나만의 경로, 나만의 속도로'}},
+  {id:'p05',emoji:'✏️',name:'드로잉 원데이 클래스',info:'전국 공방 · 15,000~25,000원 · 주말',
+   tags:['정적','실내'],activity:'P',social:'S',stimulus:'F',energy:2,forced_interaction:false,solo_ok:true,reservation:true,duration:120,
+   msg:{cli:'가볍게 낙서하는 것부터도 OK',burn:'손을 움직이면 머리가 비워져요',isol:'각자 그림 그리니 말 안 해도 돼요',mix:'집중하면 잡생각이 사라져요'}},
+  {id:'p06',emoji:'🎨',name:'도예 공방 체험',info:'전국 공방 · 20,000~30,000원 · 주말',
+   tags:['동적','실내'],activity:'A',social:'S',stimulus:'F',energy:2,forced_interaction:false,solo_ok:true,reservation:true,duration:120,
+   msg:{burn:'손으로 흙 만지면 머리 비워져요',isol:'각자 작업하니 말 안 해도 자연스러워요',mix:'집중하는 동안 다른 생각 사라져요',norm:'완성작 가져가는 뿌듯함 있어요'}},
+  {id:'p07',emoji:'🍵',name:'전통 다례 체험 (소그룹)',info:'전국 한옥 체험관 · 15,000원 · 3~5인',
+   tags:['정적','실내'],activity:'P',social:'T',stimulus:'F',energy:1,forced_interaction:false,solo_ok:false,reservation:true,duration:60,
+   msg:{burn:'아무것도 안 해도 되는 조용한 시간',isol:'말이 거의 없어도 되는 분위기예요',mix:'차 한 잔의 여유가 생각보다 도움돼요',norm:'함께지만 각자 마음이 조용해져요'}},
+  {id:'p08',emoji:'🎬',name:'야외 영화 상영회',info:'전국 · 무료 · 여름 주말',
+   tags:['정적','야외'],activity:'P',social:'T',stimulus:'F',energy:1,forced_interaction:false,solo_ok:true,reservation:false,duration:120,
+   msg:{burn:'그냥 앉아서 보기만 해도 되는 활동',isol:'혼자 와도 이상하지 않아요',mix:'사람 많지만 각자 영화에 집중해요',norm:'가을 하늘 아래 영화 한 편'}},
+  {id:'p09',emoji:'📖',name:'독립서점 북토크',info:'전국 독립서점 · 무료~10,000원 · 저녁',
+   tags:['정적','실내'],activity:'P',social:'T',stimulus:'E',energy:2,forced_interaction:false,solo_ok:true,reservation:false,duration:90,
+   msg:{burn:'가만히 앉아서 듣기만 해도 돼요',isol:'혼자 와도 자연스러운 분위기예요',norm:'새로운 작가와 이야기의 세계로'}},
+  {id:'p10',emoji:'🖋️',name:'캘리그라피 원데이',info:'전국 공방 · 20,000원 · 5~6인',
+   tags:['정적','실내'],activity:'P',social:'T',stimulus:'F',energy:1,forced_interaction:false,solo_ok:false,reservation:true,duration:90,
+   msg:{burn:'집중하다 보면 시간이 금방 가요',mix:'말 없이 각자 글씨 쓰는 분위기예요',norm:'완성작이 예뻐서 뿌듯해요'}},
+  {id:'p11',emoji:'🚴',name:'자전거 문화재 탐방',info:'각 지자체 · 무료 · 반나절',
+   tags:['동적','야외'],activity:'A',social:'S',stimulus:'E',energy:2,forced_interaction:false,solo_ok:true,reservation:false,duration:180,
+   msg:{isol:'혼자 달리는 자유로운 탐험이에요',norm:'바람 맞으며 새로운 곳 발견하는 재미'}},
+  {id:'p12',emoji:'🌱',name:'그룹 플로깅',info:'전국 러닝 클럽 · 무료 · 주말 아침',
+   tags:['동적','야외'],activity:'A',social:'T',stimulus:'E',energy:3,forced_interaction:false,solo_ok:false,reservation:false,duration:90,
+   msg:{norm:'달리고 줍고, 몸도 마음도 상쾌해요'}},
+  {id:'p13',emoji:'💃',name:'K-댄스 소셜 클래스',info:'전국 · 15,000~20,000원 · 저녁',
+   tags:['동적','실내'],activity:'A',social:'T',stimulus:'E',energy:3,forced_interaction:true,solo_ok:false,reservation:true,duration:90,
+   msg:{norm:'에너지 폭발, 같이 춤추면 즐거워요'}},
+  {id:'p14',emoji:'🎭',name:'소극장 연극 관람',info:'전국 소극장 · 10,000~20,000원',
+   tags:['정적','실내'],activity:'P',social:'T',stimulus:'E',energy:1,forced_interaction:false,solo_ok:true,reservation:true,duration:90,
+   msg:{burn:'가만히 앉아서 빠져드는 경험이에요',norm:'작은 공간에서 몰입하는 특별한 감동'}},
+  {id:'p15',emoji:'🎻',name:'클래식 소규모 살롱',info:'예술의전당 외 · 청년 할인 10,000~20,000원',
+   tags:['정적','실내'],activity:'P',social:'T',stimulus:'F',energy:1,forced_interaction:false,solo_ok:true,reservation:true,duration:60,
+   msg:{cli:'조용히 음악에만 집중하는 시간이에요',burn:'아무것도 안 해도 되는 1시간',isol:'혼자 와도 자연스러운 공간이에요',mix:'음악이 대신 말해줘요'}},
 ];
 
-// ─── 상태 ───────────────────────────────────────
-let A={sg:{},qa:{},re:{},cond:{}};
-const voteLog={};
+// ══════════════════════════════════
+// 질문 데이터
+// ══════════════════════════════════
+const Q1 = [ // 에너지
+  {id:'q1',txt:'최근 2주 동안, 평소 좋아하던 일에 흥미나 즐거움을 거의 느끼지 못했나요?',
+   ch:['전혀 없다','며칠 동안 느꼈다','7일 이상 느꼈다','거의 매일 느꼈다'],val:[0,1,2,3]},
+  {id:'q2',txt:'최근 2주 동안, 기분이 가라앉거나 우울하거나 희망이 없다고 느낀 적이 있나요?',
+   ch:['전혀 없다','며칠 동안 느꼈다','7일 이상 느꼈다','거의 매일 느꼈다'],val:[0,1,2,3]},
+  {id:'q3',txt:'주말에 아무 일정이 없을 때, 요즘 나의 기본 상태는?',
+   ch:['침대와 물아일체. 손가락 하나 까딱할 에너지가 없다','쉬고 싶은데 뭔가 해야 한다는 강박이 있다. 억지로 움직이는 느낌','쉬더라도 방 청소나 카페 같은 것을 사부작사부작 시도한다'],val:[2,1,0]},
+  {id:'q4',txt:'최근 한 달 동안 정신적 피로도(번아웃)를 표현한다면?',
+   ch:['① 아주 건강하고 충전된 상태','② 약간 피곤하지만 괜찮다','③ 보통. 쉬면 회복될 것 같다','④ 꽤 지쳤다. 회복이 잘 안 된다','⑤ 완전히 방전. 영혼이 탈탈 털린 상태'],val:[0,0,1,2,3]},
+];
+const Q2 = [ // 활동시간
+  {id:'q5',txt:'감성과 텐션이 가장 높게 차오르는 시간대는?',
+   ch:['따뜻한 햇살과 밝은 분위기가 어울리는 낮 (주간형)','조명과 야경, 차분한 분위기가 더해주는 밤 (야간형)','주중에는 여유가 없어 주말에만 집중하고 싶다'],val:['day','night','weekend']},
+  {id:'q6',txt:'최근 일주일간 순수 여가 목적으로 외출한 횟수는?',
+   hint:'퇴근·등교 같은 의무 외출 제외',
+   ch:['0회 — 집 밖을 나가지 않았다','1~2회 — 가끔 나갔다','3회 이상 — 자주 나갔다'],val:['0','1','3']},
+];
+const Q3 = [ // 사회성
+  {id:'q7',txt:'속마음을 털어놓거나 이해해 주는 사람이 주변에 얼마나 있나요?',
+   ch:['한 명도 없다','1~2명 정도는 있다','언제든 연락할 수 있는 친구들이 꽤 있다'],val:[3,1,0]},
+  {id:'q8',txt:'지금 혼자인 것이 어떻게 느껴지나요?',
+   ch:['어쩔 수 없이 혼자다. 연결되고 싶은데 잘 안 된다','어느 정도는 선택이지만 가끔 외롭다','내가 선택한 것이다. 혼자가 편하고 충전된다'],val:[3,1,0]},
+  {id:'q9',txt:'처음 보는 사람들이 있거나, 새로운 문화 공간에 들어가는 상황을 상상하면?',
+   ch:['"아, 기 빨려..." 생각만 해도 피곤하고 숨고 싶다','조금 불편하고 긴장되지만 그렇다고 피하고 싶진 않다','조금 긴장되지만 설레거나 크게 신경 쓰이지 않는다'],val:[3,1,0]},
+  {id:'q10',txt:'문화 활동 중 다른 참여자와의 소통은 어느 정도가 편한가요?',
+   ch:['누구의 방해도 없이 온전히 나 혼자 집중하고 싶다','말을 섞지 않더라도 같은 공간에 조용히 함께하는 분위기가 좋다','관심사가 같은 사람들과 가볍게 대화하며 친해지고 싶다'],val:[2,1,0]},
+];
+const Q4 = [ // 맞춤조건
+  {id:'q11',txt:'지금 당장 눈앞에 펼쳐졌으면 하는 힐링 플레이스는?',
+   ch:['피톤치드 가득한 숲속이나 탁 트인 조용한 공원 (야외 자연)','에어컨이 시원하고 세련된 갤러리나 북카페 (실내)'],val:['outdoor','indoor']},
+  {id:'q12',txt:'문화 행사 참여를 위해 이동 가능한 최대 거리(편도)는?',
+   ch:['걸어서 10~15분 이내','대중교통으로 30분 이내','대중교통으로 1시간 내외'],val:['walk','30min','1h']},
+  {id:'q13',txt:'문화생활 1회 참여 시 부담 없는 예산은?',
+   ch:['무료 프로그램만','1만원 미만','1~3만원','5만원 이상도 상관없음'],val:['free','cheap','mid','high']},
+];
+const Q5 = [ // 자극
+  {id:'q14',txt:'예술을 감상하거나 여가를 즐길 때, 나의 마음을 더 움직이는 방식은?',
+   ch:['생각과 해석이 필요한 활동 (독서 토론·영화 비평·글쓰기·연극)','특별한 생각 없이 감각에 몰입 (미디어아트·음악 감상·풍경화)'],val:['verbal','sensory']},
+  {id:'q15',txt:'스트레스가 머리끝까지 찼을 때, 더 필요한 힐링의 형태는?',
+   ch:['손으로 직접 만들고 발산하기 (도예·드로잉·DIY 공방)','가만히 앉아 눈귀로 채워 비워내기 (콘서트·뮤지컬·전시회)'],val:['express','absorb']},
+  {id:'q16',txt:'주말 문화생활을 고를 때 더 끌리는 선택지는?',
+   ch:['한 번도 본 적 없는 신선한 현대미술 전시나 독립영화 (새로움/도전)','마음 편안해지는 대중적인 클래식 공연이나 인상파 풍경화 (안정/친숙)'],val:['explore','familiar']},
+];
 
-function go(id){
-  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-  window.scrollTo(0,0);
+// ══════════════════════════════════
+// 시군구 데이터
+// ══════════════════════════════════
+const DISTRICTS = {
+  '서울':['강남구','강동구','강북구','강서구','관악구','광진구','구로구','금천구','노원구','도봉구','동대문구','동작구','마포구','서대문구','서초구','성동구','성북구','송파구','양천구','영등포구','용산구','은평구','종로구','중구','중랑구'],
+  '부산':['강서구','금정구','기장군','남구','동구','동래구','부산진구','북구','사상구','사하구','서구','수영구','연제구','영도구','중구','해운대구'],
+  '대구':['군위군','남구','달서구','달성군','동구','북구','서구','수성구','중구'],
+  '인천':['강화군','계양구','남동구','동구','미추홀구','부평구','서구','연수구','옹진군','중구'],
+  '광주':['광산구','남구','동구','북구','서구'],
+  '대전':['대덕구','동구','서구','유성구','중구'],
+  '울산':['남구','동구','북구','울주군','중구'],
+  '세종':['세종시'],
+  '경기':['가평군','고양시','과천시','광명시','광주시','구리시','군포시','김포시','남양주시','동두천시','부천시','성남시','수원시','시흥시','안산시','안성시','안양시','양주시','양평군','여주시','연천군','오산시','용인시','의왕시','의정부시','이천시','파주시','평택시','포천시','하남시','화성시'],
+  '강원':['강릉시','고성군','동해시','삼척시','속초시','양구군','양양군','영월군','원주시','인제군','정선군','철원군','춘천시','태백시','평창군','홍천군','화천군','횡성군'],
+  '충북':['괴산군','단양군','보은군','영동군','옥천군','음성군','제천시','증평군','진천군','청주시','충주시'],
+  '충남':['계룡시','공주시','금산군','논산시','당진시','보령시','부여군','서산시','서천군','아산시','예산군','천안시','청양군','태안군','홍성군'],
+  '전북':['고창군','군산시','김제시','남원시','무주군','부안군','순창군','완주군','익산시','임실군','장수군','전주시','정읍시','진안군'],
+  '전남':['강진군','고흥군','곡성군','광양시','구례군','나주시','담양군','목포시','무안군','보성군','순천시','신안군','여수시','영광군','영암군','완도군','장성군','장흥군','진도군','함평군','해남군','화순군'],
+  '경북':['경산시','경주시','고령군','구미시','군위군','김천시','문경시','봉화군','상주시','성주군','안동시','영덕군','영양군','영주시','영천시','예천군','울릉군','울진군','의성군','청도군','청송군','칠곡군','포항시'],
+  '경남':['거제시','거창군','고성군','김해시','남해군','밀양시','사천시','산청군','양산시','의령군','진주시','창녕군','창원시','통영시','하동군','함안군','함양군','합천군'],
+  '제주':['서귀포시','제주시'],
+};
+
+// 지도 시도 위치
+const REGION_POS = {
+  '서울':{x:148,y:82},'인천':{x:115,y:95},'경기':{x:178,y:108},
+  '강원':{x:268,y:68},'충북':{x:232,y:158},'충남':{x:148,y:172},
+  '세종':{x:195,y:170},'대전':{x:210,y:187},'경북':{x:295,y:182},
+  '대구':{x:280,y:225},'전북':{x:170,y:232},'광주':{x:148,y:282},
+  '전남':{x:162,y:325},'경남':{x:262,y:272},'울산':{x:335,y:250},
+  '부산':{x:318,y:292},'제주':{x:138,y:440},
+};
+
+// ══════════════════════════════════
+// 상태
+// ══════════════════════════════════
+let A = {q1:{},q2:{},q3:{},q4:{},q5:{}};
+let myGroup = 'norm';
+let myAnimal = 'PSF';
+let myRegion = '';
+let myDistrict = '';
+
+// ══════════════════════════════════
+// 지역 드롭다운
+// ══════════════════════════════════
+function updateDistrict() {
+  const r = document.getElementById('i-region').value;
+  const dd = document.getElementById('i-district');
+  dd.innerHTML = '<option value="">시·군·구 선택</option>';
+  if (r && DISTRICTS[r]) {
+    DISTRICTS[r].forEach(d => {
+      const o = document.createElement('option');
+      o.value = d; o.textContent = d;
+      dd.appendChild(o);
+    });
+  }
 }
-function chkI(){
-  const ok=document.getElementById('sage').value&&document.getElementById('sreg').value&&document.getElementById('sstat').value;
-  document.getElementById('ib').disabled=!ok;
+function chkInfo() {
+  const ok = document.getElementById('i-age').value &&
+             document.getElementById('i-region').value &&
+             document.getElementById('i-district').value &&
+             document.getElementById('i-status').value;
+  document.getElementById('ib').disabled = !ok;
 }
-function startQ(){go('sq1');renderQ(Q1,'q1c','p1','pt1','n1',A.sg);}
 
-// ─── 문항 렌더 ──────────────────────────────────
-function renderQ(data,cid,pid,ptid,nid,ansObj){
-  const c=document.getElementById(cid);c.innerHTML='';
-  data.forEach((q,qi)=>{
-    const d=document.createElement('div');
-    d.className='qw'+(q.changed?' updated':'');
-    d.innerHTML=`
-      ${q.changed?'<span class="changed-badge">✏️ 개선된 질문</span>':''}
-      <div class="qn">Q${qi+1}.</div>
-      <div class="qt">${q.txt}</div>
-      ${q.hint?`<div class="qh">${q.hint}</div>`:''}
-      <div class="choices" id="ch-${q.id}"></div>`;
+// ══════════════════════════════════
+// 퀴즈 렌더
+// ══════════════════════════════════
+function renderQ(data, cid, pid, ptid, nid, ansObj) {
+  const c = document.getElementById(cid);
+  c.innerHTML = '';
+  data.forEach((q, qi) => {
+    const d = document.createElement('div');
+    d.className = 'qw';
+    d.innerHTML = `<div class="qn">Q${qi+1}.</div><div class="qt">${q.txt}</div>${q.hint?`<div class="qh">${q.hint}</div>`:''}<div class="choices" id="ch-${q.id}"></div>`;
     c.appendChild(d);
-    const cd=d.querySelector('#ch-'+q.id);
-    q.ch.forEach((ch,ci)=>{
-      const b=document.createElement('button');
-      b.className='cbtn';
-      b.innerHTML=`<span class="cn">${ci+1}</span>${ch}`;
-      b.onclick=()=>{
-        cd.querySelectorAll('.cbtn').forEach(x=>x.classList.remove('sel'));
+    const cd = d.querySelector(`#ch-${q.id}`);
+    q.ch.forEach((ch, ci) => {
+      const b = document.createElement('button');
+      b.className = 'cbtn';
+      b.innerHTML = `<span class="cn">${ci+1}</span>${ch}`;
+      b.onclick = () => {
+        cd.querySelectorAll('.cbtn').forEach(x => x.classList.remove('sel'));
         b.classList.add('sel');
-        ansObj[q.id]=q.map?q.map[ci]:ci+1;
-        const cnt=Object.keys(ansObj).length;
-        document.getElementById(pid).style.width=(cnt/data.length*100)+'%';
-        document.getElementById(ptid).textContent=cnt+'/'+data.length;
-        document.getElementById(nid).disabled=cnt<data.length;
+        ansObj[q.id] = q.val[ci];
+        const cnt = Object.keys(ansObj).length;
+        document.getElementById(pid).style.width = (cnt/data.length*100) + '%';
+        document.getElementById(ptid).textContent = cnt+'/'+data.length;
+        document.getElementById(nid).disabled = cnt < data.length;
       };
       cd.appendChild(b);
     });
   });
 }
 
-// ─── 점수 계산 ──────────────────────────────────
-function calcType(){
-  const sg=Object.values(A.sg).reduce((s,v)=>s+v,0)||12;
-  const qa=Object.values(A.qa).reduce((s,v)=>s+v,0)||9;
-  const re=Object.values(A.re).reduce((s,v)=>s+v,0)||15;
-  const code=(sg<=12?'S':'G')+(qa<=9?'Q':'A')+(re<=15?'R':'E');
-  return{code,sgPct:Math.round(((sg-4)/16)*100),qaPct:Math.round(((qa-3)/12)*100),rePct:Math.round(((re-5)/20)*100)};
+// ══════════════════════════════════
+// 군 분류 로직 (사용자에게 숨김)
+// ══════════════════════════════════
+function classifyGroup() {
+  const all = {...A.q1,...A.q2,...A.q3,...A.q4,...A.q5};
+  // PHQ-2
+  const phq2 = (all.q1||0) + (all.q2||0);
+  if (phq2 >= 3) return 'cli';
+  // 방전 점수
+  const burnScore = (all.q3||0) + (all.q4||0) + (all.q6==='0'?1:0);
+  // 단절 점수 (Q8=선택한혼자면 Q7 무효화)
+  const q7 = all.q8===0 ? 0 : (all.q7||0);  // q8val=0은 내향선택
+  const isolScore = q7 + (all.q8||0) + (all.q9||0) + (all.q10||0) + (all.q6==='0'?1:0);
+  const isBurn = burnScore >= 2;
+  const isIsol = isolScore >= 4;
+  if (isBurn && isIsol) return 'mix';
+  if (isBurn) return 'burn';
+  if (isIsol) return 'isol';
+  return 'norm';
 }
 
-// ─── 로딩 ───────────────────────────────────────
-const AN=['🌿','🌱','🍃','🌲','🦔','✨'];
-let li=0,tmr=null;
-function doLoad(){
-  go('sload');
-  tmr=setInterval(()=>{document.getElementById('la').textContent=AN[li++%AN.length];},380);
-  setTimeout(()=>{clearInterval(tmr);showResult();},2700);
+// ══════════════════════════════════
+// 동물 분류 (A/P × T/S × E/F)
+// ══════════════════════════════════
+function classifyAnimal() {
+  const all = {...A.q1,...A.q2,...A.q3,...A.q4,...A.q5};
+  // P(정적) vs A(동적): Q15
+  const isActive = all.q15 === 'express';
+  // S(혼자) vs T(함께): Q8+Q10
+  const q8solo = all.q8 === 0; // 내향형 선택
+  const q10social = all.q10 === 0; // 대화하며
+  const isSocial = !q8solo && q10social;
+  // F(익숙) vs E(탐험): Q16
+  const isExplore = all.q16 === 'explore';
+  return (isActive?'A':'P') + (isSocial?'T':'S') + (isExplore?'E':'F');
 }
 
-// ─── 결과 ───────────────────────────────────────
-function showResult(){
-  const{code,sgPct,qaPct,rePct}=calcType();
-  const T=TYPES[code]||TYPES['SQR'];
-  document.getElementById('re').textContent=T.emoji;
-  document.getElementById('re').style.filter=`drop-shadow(0 0 24px ${T.color}68)`;
-  document.getElementById('rc').textContent=code;
-  const pts=T.name.split(' ');
-  document.getElementById('rn').innerHTML=pts.length>1?`${pts[0]} <span>${pts.slice(1).join(' ')}</span>`:`<span>${T.name}</span>`;
-  document.getElementById('rd').textContent=T.desc;
-  const bd=document.getElementById('rbars');bd.innerHTML='';
-  [{l:'함께 선호도',p:sgPct,c:'#c8965a'},{l:'활동 선호도',p:qaPct,c:'#8facd4'},{l:'에너지 충전',p:rePct,c:'#4a8c5c'}].forEach(b=>{
-    const r=document.createElement('div');r.className='srow';
-    r.innerHTML=`<span class="sl2">${b.l}</span><div class="sb-bg"><div class="sb-f" style="width:0%;background:${b.c}" data-p="${b.p}"></div></div><span class="sv">${b.p}%</span>`;
+// ══════════════════════════════════
+// 프로그램 추천
+// ══════════════════════════════════
+function recommendPrograms(group, animalCode, cond) {
+  const G = GROUP_INFO[group];
+  const ap = animalCode[0]; // A or P
+  const ts = animalCode[1]; // T or S
+  const ef = animalCode[2]; // E or F
+  let pool = PROGRAMS.filter(G.filter);
+  // 성향 필터 (가중 점수)
+  const scored = pool.map(p => {
+    let score = 0;
+    if (p.activity === ap) score += 2;
+    if (p.social === ts || (ts==='S' && p.solo_ok)) score += 2;
+    if (p.stimulus === ef) score += 1;
+    // 조건 필터
+    if (cond.space === 'outdoor' && p.tags.includes('야외')) score += 1;
+    if (cond.space === 'indoor' && p.tags.includes('실내')) score += 1;
+    return {p, score};
+  });
+  scored.sort((a,b) => b.score - a.score);
+  return scored.slice(0,3).map(s => s.p);
+}
+
+// ══════════════════════════════════
+// 로딩
+// ══════════════════════════════════
+const AN = ['🌿','🌱','🍃','🌲','🦔','✨'];
+let li = 0, tmr = null;
+function doLoad() {
+  go('s-load');
+  tmr = setInterval(() => { document.getElementById('la').textContent = AN[li++%AN.length]; }, 380);
+  setTimeout(() => { clearInterval(tmr); showResult(); }, 2700);
+}
+
+// ══════════════════════════════════
+// 결과 렌더
+// ══════════════════════════════════
+function showResult() {
+  myGroup = classifyGroup();
+  myAnimal = classifyAnimal();
+  myRegion = document.getElementById('i-region').value;
+  myDistrict = document.getElementById('i-district').value;
+  const T = TYPES[myAnimal] || TYPES['PSF'];
+  const G = GROUP_INFO[myGroup];
+  const cond = {
+    space: (A.q4.q11||'indoor'),
+    distance: (A.q4.q12||'30min'),
+    cost: (A.q4.q13||'mid'),
+  };
+
+  // 동물 표시
+  document.getElementById('re').textContent = T.emoji;
+  document.getElementById('re').style.filter = `drop-shadow(0 0 24px ${T.color}70)`;
+  document.getElementById('rc').textContent = myAnimal;
+  const parts = T.name.split(' ');
+  document.getElementById('rn').innerHTML = parts.length > 1
+    ? `${parts[0]} <span>${parts.slice(1).join(' ')}</span>`
+    : `<span>${T.name}</span>`;
+  document.getElementById('rd').textContent = T.desc;
+
+  // 상태 바 (사용자에게는 성향 정도로만 표시)
+  const all = {...A.q1,...A.q2,...A.q3,...A.q4,...A.q5};
+  const phq2Pct = Math.round(((all.q1||0)+(all.q2||0))/6*100);
+  const burnPct = Math.round(((all.q3||0)+(all.q4||0))/5*100);
+  const socialPct = Math.round((3-(all.q8||0))/3*100);
+  const bd = document.getElementById('rbars'); bd.innerHTML = '';
+  [{l:'에너지 충전 수준', p:100-burnPct, c:'#c4924e'},
+   {l:'사회 연결 수준', p:socialPct, c:'#6bb880'},
+   {l:'활동 선호도', p:myAnimal[0]==='A'?70:35, c:'#4aa8a5'}
+  ].forEach(b => {
+    const r = document.createElement('div'); r.className = 'srow';
+    r.innerHTML = `<span class="sl">${b.l}</span><div class="sb"><div class="sb-f" style="width:0%;background:${b.c}" data-p="${b.p}"></div></div><span class="sv">${b.p}%</span>`;
     bd.appendChild(r);
   });
-  setTimeout(()=>document.querySelectorAll('.sb-f').forEach(e=>e.style.width=e.dataset.p+'%'),200);
-  const rxl=document.getElementById('rxlist');rxl.innerHTML='';
-  T.rx.forEach(p=>{
-    const card=document.createElement('div');card.className='rxcard';
-    card.innerHTML=`
-      <div class="rx-top"><div class="rx-ico">${p.ico}</div>
-        <div class="rx-info"><h4>${p.name}</h4><p>${p.info}</p>
-          <div class="tags">${p.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>
+  setTimeout(() => document.querySelectorAll('.sb-f').forEach(e => e.style.width = e.dataset.p+'%'), 200);
+
+  // 현재 상태 표시 (사용자에게 동물 상태명으로만 표시)
+  const states_info = ANIMAL_STATES[myAnimal];
+  const curState = states_info ? states_info[myGroup] : null;
+  const gn = document.getElementById('gnotice');
+  if (curState && myGroup !== 'norm') {
+    gn.style.display = 'block';
+    gn.style.cssText = `display:block;background:${G.bg};border-color:${G.border};border-radius:14px;padding:13px 15px;width:100%;text-align:left;border:1px solid`;
+    gn.innerHTML = `
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+        <span style="font-size:1.4rem">${T.emoji}</span>
+        <div>
+          <div style="font-size:.72rem;color:${G.color};opacity:.75">지금 나의 상태</div>
+          <div style="font-family:'Black Han Sans',sans-serif;font-size:.92rem;color:${G.color}">${curState.name}</div>
+        </div>
+        <div style="margin-left:auto;font-size:1.8rem">${curState.emoji}</div>
+      </div>
+      <div style="font-size:.82rem;line-height:1.65;color:var(--mint);margin-bottom:4px">${curState.desc}</div>
+      ${myGroup==='cli'?`<div style="font-size:.74rem;color:${G.color};opacity:.75;margin-top:4px">${G.hotline}</div>`:''}`;
+  } else { gn.style.display = 'none'; }
+
+  // 회복 단계 선택 UI
+  const sw = document.getElementById('stage-wrap');
+  const ss = document.getElementById('stage-steps');
+  const path = GROUP_PATH[myGroup] || [];
+  let selectedStage = myGroup; // 기본은 현재 군
+
+  if (path.length > 0 && states_info) {
+    sw.style.display = 'block';
+    ss.innerHTML = '';
+    // 현재 상태 표시
+    const curBtn = document.createElement('div');
+    curBtn.style.cssText = `background:${G.bg};border:1px solid ${G.border};border-radius:12px;padding:10px 13px;display:flex;align-items:center;gap:10px`;
+    curBtn.innerHTML = `<span style="font-size:1.2rem">${curState?curState.emoji:'🌱'}</span><div><div style="font-size:.7rem;color:${G.color};opacity:.75">지금 나</div><div style="font-size:.85rem;font-weight:500;color:var(--white)">${curState?curState.name:'현재 상태'}</div></div><span style="margin-left:auto;font-size:.68rem;color:${G.color};background:${G.bg};padding:2px 7px;border-radius:999px;border:0.5px solid ${G.border}">현재</span>`;
+    ss.appendChild(curBtn);
+
+    // 회복 단계들
+    path.forEach((stageKey, idx) => {
+      const stateInfo = states_info[stageKey];
+      const SG = GROUP_INFO[stageKey];
+      if (!stateInfo) return;
+      const btn = document.createElement('div');
+      btn.id = `stage-btn-${stageKey}`;
+      btn.style.cssText = `background:rgba(30,61,42,.28);border:1.5px solid rgba(107,184,128,.15);border-radius:12px;padding:10px 13px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:all .2s`;
+      btn.innerHTML = `<span style="font-size:.85rem;color:var(--sage);flex-shrink:0">${idx===0?'→':'⇒'}</span><span style="font-size:1.2rem">${stateInfo.emoji}</span><div style="flex:1"><div style="font-size:.7rem;color:var(--sage);opacity:.7">${idx===path.length-1?'목표 상태':'다음 단계'}</div><div style="font-size:.85rem;font-weight:500;color:var(--white)">${stateInfo.name}</div><div style="font-size:.72rem;color:var(--mint);opacity:.72;margin-top:1px">${stateInfo.desc}</div></div>`;
+      btn.onclick = () => {
+        selectedStage = stageKey;
+        ss.querySelectorAll('[id^="stage-btn-"]').forEach(b => {
+          b.style.borderColor = 'rgba(107,184,128,.15)';
+          b.style.background = 'rgba(30,61,42,.28)';
+        });
+        btn.style.borderColor = 'var(--sage)';
+        btn.style.background = 'rgba(58,122,80,.25)';
+        // 선택된 단계 프로그램 재로드
+        const targetGroup = stageKey;
+        document.getElementById('rx-lbl').textContent = `✨ ${stateInfo.name}을 위한 문화 큐레이션`;
+        const newProgs = recommendPrograms(targetGroup, myAnimal, cond);
+        const rxl2 = document.getElementById('rxlist'); rxl2.innerHTML = '';
+        newProgs.forEach(p => {
+          const m = p.msg && p.msg[targetGroup] ? p.msg[targetGroup] : null;
+          const c2 = document.createElement('div'); c2.className = 'rx-card';
+          c2.innerHTML = `<div class="rx-top"><div class="rx-ico">${p.emoji}</div><div class="rx-info"><h4>${p.name}</h4><p>${p.info}</p><div class="rx-tags">${p.tags.map(t=>`<span class="rtag">${t}</span>`).join('')}</div></div></div>${m?`<div class="rx-msg">💬 ${m}</div>`:''}`;
+          rxl2.appendChild(c2);
+        });
+      };
+      ss.appendChild(btn);
+    });
+    // 기본 선택 없음 — 현재 군(myGroup) 기준으로 프로그램 나옴
+    // 단계 클릭 시에만 selectedStage가 바뀜
+  } else {
+    sw.style.display = 'none';
+    document.getElementById('rx-lbl').textContent = '✨ 나만의 문화 큐레이션';
+    selectedStage = myGroup;
+  }
+
+  // 프로그램 추천 (기본: 다음 단계 또는 현재 군)
+  const progs = recommendPrograms(selectedStage, myAnimal, cond);
+  const rxl = document.getElementById('rxlist'); rxl.innerHTML = '';
+  progs.forEach(p => {
+    const msg = p.msg && p.msg[myGroup] ? p.msg[myGroup] : null;
+    const card = document.createElement('div'); card.className = 'rx-card';
+    card.innerHTML = `
+      <div class="rx-top">
+        <div class="rx-ico">${p.emoji}</div>
+        <div class="rx-info">
+          <h4>${p.name}</h4><p>${p.info}</p>
+          <div class="rx-tags">${p.tags.map(t=>`<span class="rtag">${t}</span>`).join('')}</div>
         </div>
       </div>
-      <div class="vote-wrap">
-        <div class="vote-row" id="vr-${p.id}">
-          <button class="vbtn" id="v-yes-${p.id}" onclick="castVote('${p.id}','yes','${code}')">❤️ 좋아요</button>
-          <button class="vbtn" id="v-maybe-${p.id}" onclick="castVote('${p.id}','maybe','${code}')">💰 금액만 아니면</button>
-          <button class="vbtn" id="v-no-${p.id}" onclick="castVote('${p.id}','no','${code}')">👎 별로예요</button>
-        </div>
-        <div id="reason-${p.id}" style="display:none"></div>
-      </div>`;
+      ${msg ? `<div class="rx-msg">💬 ${msg}</div>` : ''}`;
     rxl.appendChild(card);
   });
-  const oth=document.getElementById('others');oth.innerHTML='';
-  Object.entries(TYPES).filter(([k])=>k!==code).forEach(([k,t])=>{
-    const c=document.createElement('div');c.className='oc';
-    c.innerHTML=`${t.emoji} ${t.name}`;
-    c.onclick=()=>alert(`${t.emoji} ${t.name}\n\n${t.desc}`);
+
+  // 다른 동물
+  const oth = document.getElementById('others'); oth.innerHTML = '';
+  Object.entries(TYPES).filter(([k]) => k !== myAnimal).forEach(([k,t]) => {
+    const c = document.createElement('div'); c.className = 'oc';
+    c.innerHTML = `${t.emoji} ${t.name}`;
+    c.onclick = () => alert(`${t.emoji} ${t.name}\n\n${t.desc}`);
     oth.appendChild(c);
   });
-  go('sres');
+
+  // 스토리지 저장
+  saveData();
+  go('s-res');
 }
 
-// ─── 투표 ───────────────────────────────────────
-const REASONS=['활동 자체가 안 맞아요','금액이 부담돼요','거리가 멀어요','시간대가 안 맞아요'];
-function castVote(pid,vote,code){
-  if(voteLog[pid]) return;
-  voteLog[pid]={type:code,vote,reasons:[]};
-  ['yes','maybe','no'].forEach(v=>{
-    const btn=document.getElementById(`v-${v}-${pid}`);
-    btn.disabled=true;
-    if(v===vote) btn.classList.add(`v-${v}`);
+// ══════════════════════════════════
+// 스토리지
+// ══════════════════════════════════
+const STORE_KEY = 'moonjeonseongsi-map-v3';
+async function saveData() {
+  try {
+    let data = {};
+    try { const r = await window.storage.get(STORE_KEY, true); if(r) data = JSON.parse(r.value); } catch(e){}
+    const key = `${myRegion}__${myDistrict}__${myAnimal}`;
+    data[key] = (data[key]||0) + 1;
+    await window.storage.set(STORE_KEY, JSON.stringify(data), true);
+  } catch(e) {}
+}
+async function loadMapData() {
+  try {
+    const r = await window.storage.get(STORE_KEY, true);
+    if (r) return JSON.parse(r.value);
+  } catch(e) {}
+  return {};
+}
+
+// ══════════════════════════════════
+// 지도 렌더
+// ══════════════════════════════════
+let mapData = {};
+let hlAnimal = null;
+
+async function renderMap() {
+  mapData = await loadMapData();
+  // 시도별 집계
+  const regionCount = {};
+  const regionAnimal = {};
+  Object.entries(mapData).forEach(([key, cnt]) => {
+    const [region,,animal] = key.split('__');
+    if (!region) return;
+    regionCount[region] = (regionCount[region]||0) + cnt;
+    if (!regionAnimal[region]) regionAnimal[region] = {};
+    regionAnimal[region][animal] = (regionAnimal[region][animal]||0) + cnt;
   });
-  if(vote==='maybe'||vote==='no'){
-    const rw=document.getElementById('reason-'+pid);
-    rw.style.display='block';
-    rw.innerHTML=`<div class="reason-wrap"><div class="reason-lbl">어떤 부분이 아쉬운가요? (여러 개 선택 가능)</div><div class="reason-chips">${REASONS.map(r=>`<span class="rchip" onclick="pickReason(this,'${pid}','${r.replace(/'/g,"\\'")}')">${r}</span>`).join('')}</div><span class="reason-skip" onclick="document.getElementById('reason-${pid}').style.display='none'">건너뛰기</span></div>`;
-  }
-  console.log('투표:', JSON.stringify(voteLog));
+  // 전체 통계
+  let total = 0, totalByAnimal = {};
+  Object.values(mapData).forEach(v => total += v);
+  Object.entries(mapData).forEach(([key,cnt]) => {
+    const animal = key.split('__')[2];
+    if (animal) totalByAnimal[animal] = (totalByAnimal[animal]||0) + cnt;
+  });
+  // 통계 카드
+  const ms = document.getElementById('mapstats'); ms.innerHTML = '';
+  const topAnimal = Object.entries(totalByAnimal).sort((a,b)=>b[1]-a[1])[0];
+  [{v:total||0,l:'총 참여자'},{v:Object.keys(regionCount).length||0,l:'참여 지역'},{v:topAnimal?`${TYPES[topAnimal[0]]?.emoji}`:'-',l:'최다 동물'}].forEach(s=>{
+    const c=document.createElement('div');c.className='stat-card';
+    c.innerHTML=`<div class="sv2">${s.v}</div><div class="sl2">${s.l}</div>`;
+    ms.appendChild(c);
+  });
+  // SVG 버블 맵
+  const svg = document.getElementById('mapsvg');
+  const g = document.getElementById('regions'); g.innerHTML = '';
+  const gl = document.getElementById('gridlines'); gl.innerHTML = '';
+  ['100','200','300'].forEach(x=>{const l=document.createElementNS('http://www.w3.org/2000/svg','line');l.setAttribute('x1',x);l.setAttribute('y1','0');l.setAttribute('x2',x);l.setAttribute('y2','490');l.setAttribute('stroke','rgba(107,184,128,.05)');l.setAttribute('stroke-width','0.5');gl.appendChild(l);});
+  ['100','200','300','400'].forEach(y=>{const l=document.createElementNS('http://www.w3.org/2000/svg','line');l.setAttribute('x1','0');l.setAttribute('y1',y);l.setAttribute('x2','400');l.setAttribute('y2',y);l.setAttribute('stroke','rgba(107,184,128,.05)');l.setAttribute('stroke-width','0.5');gl.appendChild(l);});
+  const maxCnt = Math.max(...Object.values(regionCount), 1);
+  Object.entries(REGION_POS).forEach(([name, pos]) => {
+    const cnt = regionCount[name] || 0;
+    const animals = regionAnimal[name] || {};
+    const domAnimal = Object.entries(animals).sort((a,b)=>b[1]-a[1])[0];
+    const T = domAnimal ? (TYPES[domAnimal[0]] || TYPES['PSF']) : {emoji:'—',color:'#6bb880'};
+    const r = 18 + (cnt/maxCnt)*22;
+    const alpha = hlAnimal ? (domAnimal && domAnimal[0]===hlAnimal ? 0.85 : 0.18) : 0.72;
+    const gEl = document.createElementNS('http://www.w3.org/2000/svg','g');
+    gEl.style.cursor='pointer';
+    const circle = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    circle.setAttribute('cx',pos.x);circle.setAttribute('cy',pos.y);circle.setAttribute('r',r);
+    circle.setAttribute('fill',`${T.color}${Math.round(alpha*255).toString(16).padStart(2,'0')}`);
+    circle.setAttribute('stroke',T.color);circle.setAttribute('stroke-opacity',alpha);circle.setAttribute('stroke-width','1.5');
+    gEl.appendChild(circle);
+    const emojiT = document.createElementNS('http://www.w3.org/2000/svg','text');
+    emojiT.setAttribute('x',pos.x);emojiT.setAttribute('y',pos.y-1);
+    emojiT.setAttribute('font-size',Math.round(r*0.72));emojiT.setAttribute('text-anchor','middle');emojiT.setAttribute('dominant-baseline','central');
+    emojiT.textContent = T.emoji;emojiT.style.opacity = hlAnimal?(domAnimal&&domAnimal[0]===hlAnimal?'1':'0.18'):'1';
+    gEl.appendChild(emojiT);
+    const nameT = document.createElementNS('http://www.w3.org/2000/svg','text');
+    nameT.setAttribute('x',pos.x);nameT.setAttribute('y',pos.y+r+10);
+    nameT.setAttribute('font-size','7.5');nameT.setAttribute('fill',`rgba(159,212,176,${hlAnimal?(domAnimal&&domAnimal[0]===hlAnimal?.8:.2):.65})`);
+    nameT.setAttribute('text-anchor','middle');nameT.setAttribute('font-family','Gowun Dodum,serif');
+    nameT.textContent = name;gEl.appendChild(nameT);
+    gEl.addEventListener('mouseenter', e => showTip(e, name, cnt, animals));
+    gEl.addEventListener('mousemove', e => moveTip(e));
+    gEl.addEventListener('mouseleave', hideTip);
+    g.appendChild(gEl);
+  });
+  // 범례
+  const leg = document.getElementById('mapleg'); leg.innerHTML = '';
+  Object.entries(TYPES).forEach(([code, T]) => {
+    const item = document.createElement('div');
+    item.className = 'li' + (hlAnimal===code?' hl':'');
+    item.innerHTML = `<div class="li-dot" style="background:${T.color}"></div>${T.emoji} ${T.name}`;
+    item.onclick = () => { hlAnimal = hlAnimal===code?null:code; renderMap(); };
+    leg.appendChild(item);
+  });
 }
-function pickReason(el,pid,reason){
-  el.classList.toggle('picked');
-  if(!voteLog[pid]) return;
-  const idx=voteLog[pid].reasons.indexOf(reason);
-  if(idx>-1) voteLog[pid].reasons.splice(idx,1); else voteLog[pid].reasons.push(reason);
-  console.log('투표 업데이트:', JSON.stringify(voteLog));
+
+function showTip(e, name, cnt, animals) {
+  const tip = document.getElementById('tip');
+  const sorted = Object.entries(animals).sort((a,b)=>b[1]-a[1]).slice(0,3);
+  let html = `<div style="font-family:'Black Han Sans',sans-serif;font-size:.88rem;color:var(--white);margin-bottom:6px">${name} · ${cnt}명</div>`;
+  if (sorted.length) sorted.forEach(([code,v])=>{const T=TYPES[code];if(T)html+=`<div style="display:flex;justify-content:space-between;gap:12px"><span>${T.emoji} ${T.name}</span><span style="color:var(--sage)">${v}명</span></div>`;});
+  else html += '<div style="color:rgba(159,212,176,.5);font-size:.75rem">아직 참여자 없음</div>';
+  tip.innerHTML = html; tip.classList.add('vis'); moveTip(e);
 }
-function doShare(){
-  const code=document.getElementById('rc').textContent;
-  const T=TYPES[code];
-  const msg=`나는 ${T.emoji} ${T.name}! 너는 어떤 회복 동물이야?\n우리 숲 테스트 해봐 🌲`;
-  if(navigator.share){navigator.share({title:'우리 숲',text:msg,url:location.href});}
-  else{navigator.clipboard?.writeText(msg);alert('📋 복사됐어요! 친구에게 공유해봐요 🌿');}
+function moveTip(e) {
+  const tip = document.getElementById('tip');
+  const rect = tip.parentElement.getBoundingClientRect();
+  let x = e.clientX-rect.left+12, y = e.clientY-rect.top-20;
+  if (x+170>rect.width) x = e.clientX-rect.left-165;
+  if (y<0) y=4;
+  tip.style.left=x+'px'; tip.style.top=y+'px';
 }
-function resetAll(){
-  A={sg:{},qa:{},re:{},cond:{}};
-  Object.keys(voteLog).forEach(k=>delete voteLog[k]);
-  document.getElementById('cc').checked=false;
-  document.getElementById('sb').disabled=true;
-  ['sage','sreg','sstat'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('ib').disabled=true;
+function hideTip() { document.getElementById('tip').classList.remove('vis'); }
+
+// ══════════════════════════════════
+// 유틸
+// ══════════════════════════════════
+function go(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('on'));
+  document.getElementById(id).classList.add('on');
+  window.scrollTo(0,0);
 }
-// 배경
-const pts=['🍃','🍂','🌿','✨','🌱'];
-const fbg=document.getElementById('fbg');
-for(let i=0;i<14;i++){
-  const e=document.createElement('div');e.className='lp';e.textContent=pts[Math.floor(Math.random()*pts.length)];
+function startQ() {
+  go('s-q1');
+  renderQ(Q1,'qc1','p1','pt1','n1',A.q1);
+}
+function doShare() {
+  const T = TYPES[myAnimal];
+  const msg = `나는 ${T.emoji} ${T.name}! 너는 어떤 회복 동물이야?\n우리 숲 테스트 해봐 🌲`;
+  if (navigator.share) navigator.share({title:'우리 숲',text:msg});
+  else { navigator.clipboard?.writeText(msg); alert('📋 복사됐어요! 친구에게 공유해봐요 🌿'); }
+}
+function resetAll() {
+  A = {q1:{},q2:{},q3:{},q4:{},q5:{}};
+  document.getElementById('ck').checked = false;
+  document.getElementById('sb-land').disabled = true;
+  ['i-age','i-region','i-district','i-status'].forEach(id => document.getElementById(id).value='');
+  document.getElementById('ib').disabled = true;
+}
+
+// 배경 파티클
+const pts=['🍃','🍂','🌿','✨','🌱','🍀'];
+const fbg = document.getElementById('fbg');
+for(let i=0;i<16;i++){
+  const e=document.createElement('div');e.className='pt';e.textContent=pts[Math.floor(Math.random()*pts.length)];
   e.style.cssText=`left:${Math.random()*100}%;animation-duration:${9+Math.random()*13}s;animation-delay:${-Math.random()*22}s;font-size:${.8+Math.random()*1}rem`;
   fbg.appendChild(e);
 }
