@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>우리 숲 — 나의 회복 동물 찾기</title>
 <link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Black+Han+Sans&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
 :root{
   --bg:#0f2018;--moss:#1e3d2a;--leaf:#3a7a50;
@@ -122,6 +124,15 @@ select option{background:#1e3d2a}
 .rx-warn{font-size:.72rem;color:#e0a85a;background:rgba(196,146,78,.08);border-radius:8px;padding:5px 10px;margin-top:6px;line-height:1.5}
 .rx-link{display:inline-block;margin-top:7px;font-size:.74rem;color:var(--sage);text-decoration:none;opacity:.85}
 .rx-link:hover{opacity:1;text-decoration:underline}
+
+/* Leaflet 다크 테마 오버라이드 */
+.leaflet-container{background:#0d1b12;font-family:'Gowun Dodum',serif}
+.leaflet-div-icon{background:transparent;border:none}
+.uri-marker{cursor:pointer}
+.leaflet-tooltip{background:rgba(20,40,28,.96);border:1px solid rgba(107,184,128,.3);color:#e8f0e8;border-radius:8px;font-size:.76rem;line-height:1.5;box-shadow:0 4px 16px rgba(0,0,0,.45);padding:6px 9px}
+.leaflet-tooltip-top::before{border-top-color:rgba(107,184,128,.3)}
+.leaflet-bar a{background:#16291c;color:#9fd4b0;border-color:rgba(107,184,128,.2)}
+.leaflet-bar a:hover{background:#1e3d2a}
 
 /* 지도 */
 #s-map{padding-top:24px}
@@ -300,10 +311,7 @@ select option{background:#1e3d2a}
   <div style="font-family:'Black Han Sans',sans-serif;font-size:1.3rem;color:var(--white)">전국 회복 동물 분포</div>
   <div class="stats-grid" id="mapstats"></div>
   <div class="map-container">
-    <svg class="map-svg" viewBox="0 0 400 490" xmlns="http://www.w3.org/2000/svg" id="mapsvg">
-      <g id="gridlines"></g><g id="regions"></g>
-    </svg>
-    <div class="tip" id="tip"></div>
+    <div id="map" style="width:100%;height:440px;border-radius:16px;overflow:hidden;background:#0d1b12"></div>
   </div>
   <div class="leg" id="mapleg"></div>
   <button class="btn-back" style="align-self:flex-start;margin-top:4px" onclick="go('s-res')">← 내 결과로</button>
@@ -562,16 +570,6 @@ const DISTRICTS = {
   '경북':['경산시','경주시','고령군','구미시','군위군','김천시','문경시','봉화군','상주시','성주군','안동시','영덕군','영양군','영주시','영천시','예천군','울릉군','울진군','의성군','청도군','청송군','칠곡군','포항시'],
   '경남':['거제시','거창군','고성군','김해시','남해군','밀양시','사천시','산청군','양산시','의령군','진주시','창녕군','창원시','통영시','하동군','함안군','함양군','합천군'],
   '제주':['서귀포시','제주시'],
-};
-
-// 지도 시도 위치
-const REGION_POS = {
-  '서울':{x:148,y:82},'인천':{x:115,y:95},'경기':{x:178,y:108},
-  '강원':{x:268,y:68},'충북':{x:232,y:158},'충남':{x:148,y:172},
-  '세종':{x:195,y:170},'대전':{x:210,y:187},'경북':{x:295,y:182},
-  '대구':{x:280,y:225},'전북':{x:170,y:232},'광주':{x:148,y:282},
-  '전남':{x:162,y:325},'경남':{x:262,y:272},'울산':{x:335,y:250},
-  '부산':{x:318,y:292},'제주':{x:138,y:440},
 };
 
 // ══════════════════════════════════
@@ -954,116 +952,76 @@ function showResult(shared) {
     oth.appendChild(c);
   });
 
-  // 스토리지 저장 (공유받은 화면은 내 기록을 덮어쓰지 않음)
-  if (!isSharedView) saveData();
+  // 결과를 DB에 익명 기록 (공유받은 화면은 기록하지 않음)
+  if (!isSharedView) recordResult();
   go('s-res');
-}
-
-// ══════════════════════════════════
-// 스토리지
-// ══════════════════════════════════
-const STORE_KEY = 'moonjeonseongsi-map-v3';
-async function saveData() {
-  try {
-    let data = {};
-    // window.storage (Claude 아티팩트) 우선, 없으면 localStorage 사용
-    if (window.storage) {
-      try { const r = await window.storage.get(STORE_KEY, true); if(r) data = JSON.parse(r.value); } catch(e){}
-    } else {
-      try { const saved = localStorage.getItem(STORE_KEY); if(saved) data = JSON.parse(saved); } catch(e){}
-    }
-    const key = myRegion + '__' + myDistrict + '__' + myAnimal;
-    data[key] = (data[key]||0) + 1;
-    if (window.storage) {
-      await window.storage.set(STORE_KEY, JSON.stringify(data), true);
-    } else {
-      localStorage.setItem(STORE_KEY, JSON.stringify(data));
-    }
-  } catch(e) { console.warn('saveData 실패:', e); }
-}
-async function loadMapData() {
-  try {
-    if (window.storage) {
-      const r = await window.storage.get(STORE_KEY, true);
-      if (r) return JSON.parse(r.value);
-    } else {
-      const saved = localStorage.getItem(STORE_KEY);
-      if (saved) return JSON.parse(saved);
-    }
-  } catch(e) {}
-  return {};
 }
 
 // ══════════════════════════════════
 // 지도 렌더
 // ══════════════════════════════════
-let mapData = {};
 let hlAnimal = null;
+let leafMap = null, markerLayer = null;
+
+// 시도 중심 좌표 (프론트 짧은 지역명 기준 — recordResult가 보내는 region과 동일 키)
+const SIDO_LATLNG = {
+  '서울':[37.5665,126.9780],'부산':[35.1796,129.0756],'대구':[35.8714,128.6014],
+  '인천':[37.4563,126.7052],'광주':[35.1595,126.8526],'대전':[36.3504,127.3845],
+  '울산':[35.5384,129.3114],'세종':[36.4801,127.2890],'경기':[37.4138,127.5183],
+  '강원':[37.8228,128.1555],'충북':[36.6357,127.4914],'충남':[36.5184,126.8000],
+  '전북':[35.7175,127.1530],'전남':[34.8679,126.9910],'경북':[36.4919,128.8889],
+  '경남':[35.4606,128.2132],'제주':[33.4996,126.5312],
+};
 
 async function renderMap() {
-  mapData = await loadMapData();
-  // 시도별 집계
-  const regionCount = {};
-  const regionAnimal = {};
-  Object.entries(mapData).forEach(([key, cnt]) => {
-    const [region,,animal] = key.split('__');
-    if (!region) return;
-    regionCount[region] = (regionCount[region]||0) + cnt;
-    if (!regionAnimal[region]) regionAnimal[region] = {};
-    regionAnimal[region][animal] = (regionAnimal[region][animal]||0) + cnt;
-  });
-  // 전체 통계
-  let total = 0, totalByAnimal = {};
-  Object.values(mapData).forEach(v => total += v);
-  Object.entries(mapData).forEach(([key,cnt]) => {
-    const animal = key.split('__')[2];
-    if (animal) totalByAnimal[animal] = (totalByAnimal[animal]||0) + cnt;
-  });
+  // 실제 DB 집계 조회
+  let stats = { total:0, byRegion:{}, byAnimal:{} };
+  try { const res = await fetch('/api/stats'); if (res.ok) stats = await res.json(); } catch(e){}
+  const total = stats.total||0, byRegion = stats.byRegion||{}, byAnimal = stats.byAnimal||{};
+
   // 통계 카드
   const ms = document.getElementById('mapstats'); ms.innerHTML = '';
-  const topAnimal = Object.entries(totalByAnimal).sort((a,b)=>b[1]-a[1])[0];
-  [{v:total||0,l:'총 참여자'},{v:Object.keys(regionCount).length||0,l:'참여 지역'},{v:topAnimal?`${TYPES[topAnimal[0]]?.emoji}`:'-',l:'최다 동물'}].forEach(s=>{
+  const topAnimal = Object.entries(byAnimal).sort((a,b)=>b[1]-a[1])[0];
+  [{v:total,l:'총 참여자'},{v:Object.keys(byRegion).length,l:'참여 지역'},{v:topAnimal?(TYPES[topAnimal[0]]?.emoji||'-'):'-',l:'최다 동물'}].forEach(s=>{
     const c=document.createElement('div');c.className='stat-card';
     c.innerHTML=`<div class="sv2">${s.v}</div><div class="sl2">${s.l}</div>`;
     ms.appendChild(c);
   });
-  // SVG 버블 맵
-  const svg = document.getElementById('mapsvg');
-  const g = document.getElementById('regions'); g.innerHTML = '';
-  const gl = document.getElementById('gridlines'); gl.innerHTML = '';
-  ['100','200','300'].forEach(x=>{const l=document.createElementNS('http://www.w3.org/2000/svg','line');l.setAttribute('x1',x);l.setAttribute('y1','0');l.setAttribute('x2',x);l.setAttribute('y2','490');l.setAttribute('stroke','rgba(107,184,128,.05)');l.setAttribute('stroke-width','0.5');gl.appendChild(l);});
-  ['100','200','300','400'].forEach(y=>{const l=document.createElementNS('http://www.w3.org/2000/svg','line');l.setAttribute('x1','0');l.setAttribute('y1',y);l.setAttribute('x2','400');l.setAttribute('y2',y);l.setAttribute('stroke','rgba(107,184,128,.05)');l.setAttribute('stroke-width','0.5');gl.appendChild(l);});
-  const maxCnt = Math.max(...Object.values(regionCount), 1);
-  Object.entries(REGION_POS).forEach(([name, pos]) => {
-    const cnt = regionCount[name] || 0;
-    const animals = regionAnimal[name] || {};
-    const domAnimal = Object.entries(animals).sort((a,b)=>b[1]-a[1])[0];
-    const T = domAnimal ? (TYPES[domAnimal[0]] || TYPES['PSF']) : {emoji:'—',color:'#6bb880'};
-    const r = 18 + (cnt/maxCnt)*22;
-    const alpha = hlAnimal ? (domAnimal && domAnimal[0]===hlAnimal ? 0.85 : 0.18) : 0.72;
-    const gEl = document.createElementNS('http://www.w3.org/2000/svg','g');
-    gEl.style.cursor='pointer';
-    const circle = document.createElementNS('http://www.w3.org/2000/svg','circle');
-    circle.setAttribute('cx',pos.x);circle.setAttribute('cy',pos.y);circle.setAttribute('r',r);
-    circle.setAttribute('fill',`${T.color}${Math.round(alpha*255).toString(16).padStart(2,'0')}`);
-    circle.setAttribute('stroke',T.color);circle.setAttribute('stroke-opacity',alpha);circle.setAttribute('stroke-width','1.5');
-    gEl.appendChild(circle);
-    const emojiT = document.createElementNS('http://www.w3.org/2000/svg','text');
-    emojiT.setAttribute('x',pos.x);emojiT.setAttribute('y',pos.y-1);
-    emojiT.setAttribute('font-size',Math.round(r*0.72));emojiT.setAttribute('text-anchor','middle');emojiT.setAttribute('dominant-baseline','central');
-    emojiT.textContent = T.emoji;emojiT.style.opacity = hlAnimal?(domAnimal&&domAnimal[0]===hlAnimal?'1':'0.18'):'1';
-    gEl.appendChild(emojiT);
-    const nameT = document.createElementNS('http://www.w3.org/2000/svg','text');
-    nameT.setAttribute('x',pos.x);nameT.setAttribute('y',pos.y+r+10);
-    nameT.setAttribute('font-size','7.5');nameT.setAttribute('fill',`rgba(159,212,176,${hlAnimal?(domAnimal&&domAnimal[0]===hlAnimal?.8:.2):.65})`);
-    nameT.setAttribute('text-anchor','middle');nameT.setAttribute('font-family','Gowun Dodum,serif');
-    nameT.textContent = name;gEl.appendChild(nameT);
-    gEl.addEventListener('mouseenter', e => showTip(e, name, cnt, animals));
-    gEl.addEventListener('mousemove', e => moveTip(e));
-    gEl.addEventListener('mouseleave', hideTip);
-    g.appendChild(gEl);
+
+  // Leaflet 지도 (최초 1회 init, 이후 마커만 갱신)
+  if (!leafMap && window.L) {
+    leafMap = L.map('map', { zoomControl:true, attributionControl:false, scrollWheelZoom:true })
+      .setView([36.4, 127.8], 6);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+      { subdomains:'abcd', minZoom:5, maxZoom:16 }).addTo(leafMap);
+    markerLayer = L.layerGroup().addTo(leafMap);
+  }
+  if (!leafMap) return; // Leaflet 로드 실패 시 통계 카드만
+  leafMap.invalidateSize();
+  markerLayer.clearLayers();
+
+  const counts = Object.values(byRegion).map(r=>r.count);
+  const maxCnt = Math.max(1, ...counts);
+  Object.entries(SIDO_LATLNG).forEach(([name, latlng]) => {
+    const reg = byRegion[name];
+    const cnt = reg ? reg.count : 0;
+    if (!cnt) return; // 참여자 있는 지역만
+    const animals = reg.animals || {};
+    const dom = Object.entries(animals).sort((a,b)=>b[1]-a[1])[0];
+    const T = dom ? (TYPES[dom[0]] || TYPES['PSF']) : {emoji:'—',color:'#6bb880'};
+    const size = Math.round(34 + (cnt/maxCnt)*30);
+    const op = (hlAnimal && !(dom && dom[0]===hlAnimal)) ? 0.25 : 1;
+    const html = `<div style="width:${size}px;height:${size}px;border-radius:50%;background:${T.color}cc;border:2px solid ${T.color};display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:0 0 14px ${T.color}99;opacity:${op}">`
+      + `<div style="font-size:${Math.round(size*0.42)}px;line-height:1">${T.emoji}</div>`
+      + `<div style="font-size:10px;color:#fff;font-weight:700;margin-top:1px">${cnt}</div></div>`;
+    const icon = L.divIcon({ html, className:'uri-marker', iconSize:[size,size], iconAnchor:[size/2,size/2] });
+    const top3 = Object.entries(animals).sort((a,b)=>b[1]-a[1]).slice(0,3)
+      .map(([c,v])=>{const t=TYPES[c];return t?`${t.emoji} ${t.name} ${v}명`:'';}).filter(Boolean).join('<br>');
+    L.marker(latlng, { icon }).addTo(markerLayer)
+      .bindTooltip(`<b>${name} · ${cnt}명</b><br>${top3}`, { direction:'top', offset:[0,-size/2] });
   });
-  // 범례
+
+  // 범례 (클릭 → 동물 하이라이트)
   const leg = document.getElementById('mapleg'); leg.innerHTML = '';
   Object.entries(TYPES).forEach(([code, T]) => {
     const item = document.createElement('div');
@@ -1074,23 +1032,13 @@ async function renderMap() {
   });
 }
 
-function showTip(e, name, cnt, animals) {
-  const tip = document.getElementById('tip');
-  const sorted = Object.entries(animals).sort((a,b)=>b[1]-a[1]).slice(0,3);
-  let html = `<div style="font-family:'Black Han Sans',sans-serif;font-size:.88rem;color:var(--white);margin-bottom:6px">${name} · ${cnt}명</div>`;
-  if (sorted.length) sorted.forEach(([code,v])=>{const T=TYPES[code];if(T)html+=`<div style="display:flex;justify-content:space-between;gap:12px"><span>${T.emoji} ${T.name}</span><span style="color:var(--sage)">${v}명</span></div>`;});
-  else html += '<div style="color:rgba(159,212,176,.5);font-size:.75rem">아직 참여자 없음</div>';
-  tip.innerHTML = html; tip.classList.add('vis'); moveTip(e);
+// 완료된 테스트를 DB에 익명 기록 (전국 분포 트래킹)
+async function recordResult() {
+  try {
+    await fetch('/api/result', { method:'POST', headers:{'content-type':'application/json'},
+      body: JSON.stringify({ animal: myAnimal, group: myGroup, region: myRegion }) });
+  } catch(e){}
 }
-function moveTip(e) {
-  const tip = document.getElementById('tip');
-  const rect = tip.parentElement.getBoundingClientRect();
-  let x = e.clientX-rect.left+12, y = e.clientY-rect.top-20;
-  if (x+170>rect.width) x = e.clientX-rect.left-165;
-  if (y<0) y=4;
-  tip.style.left=x+'px'; tip.style.top=y+'px';
-}
-function hideTip() { document.getElementById('tip').classList.remove('vis'); }
 
 // ══════════════════════════════════
 // 유틸

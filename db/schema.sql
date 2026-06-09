@@ -109,3 +109,14 @@ CREATE INDEX idx_category
 
 -- (E) content_id lookups (UI links / debugging). Non-unique on purpose.
 CREATE INDEX idx_content ON solutions (content_id);
+
+-- ============================ RESULTS (참여자 분포 트래킹) ============================
+-- Anonymous record per completed test, for the 전국 회복동물 분포 map.
+CREATE TABLE IF NOT EXISTS results (
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  animal      TEXT NOT NULL,
+  group_key   TEXT,
+  sido        TEXT,
+  created_at  TEXT DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_results_sido ON results(sido);
