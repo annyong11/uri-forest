@@ -113,6 +113,12 @@ function geoPredicate(region, district, distance, sidoOnly) {
 // Candidate query
 // ──────────────────────────────────────────────────────────────────────────
 
+// Tunable ranking weights. Personality matches dominate; the popularity/preference
+// prior (base_score, 0..5) is rescaled into [0, W.pop) so it only ever BREAKS TIES
+// among equal-fit places — it can never outrank a better personality match.
+// (Previously raw base_score up to 5.0 could leapfrog a perfect match.)
+const W = { ap: 2.0, ts: 2.0, space: 1.0, pop: 0.9 };
+
 const SELECT_COLS = `
   row_id, content_id, is_program, facility_name, program_name,
   sido, sigungu, address, latitude, longitude, price, parking_fee,
@@ -126,17 +132,17 @@ async function fetchCandidates(env, { ap, ts, spaceDb, geo, group, cost, time, p
   // so they are bound FIRST, before the geo params in WHERE.
   const sql =
     `SELECT ${SELECT_COLS},
-       ( (axis_ap = ?) * 2
-         + ( (axis_ts = ?) OR (? = 'S' AND solo_ok = 1) ) * 2
-         + (indoor_outdoor = ?) * 1
-         + base_score ) AS score
+       ( (axis_ap = ?) * ${W.ap}
+         + ( (axis_ts = ?) OR (? = 'S' AND solo_ok = 1) ) * ${W.ts}
+         + (indoor_outdoor = ?) * ${W.space}
+         + (base_score / 5.0) * ${W.pop} ) AS score
      FROM solutions
      WHERE is_active = 1
        AND ${geo.sql}
        AND ${groupPredicate(group)}
        AND ${costPredicate(cost)}
        AND ${timePredicate(time)}
-     ORDER BY score DESC, base_score DESC, RANDOM()
+     ORDER BY score DESC, RANDOM()
      LIMIT ?`;
   const params = [ap, ts, ts, spaceDb, ...geo.params, poolLimit];
   const { results } = await env.DB.prepare(sql).bind(...params).all();
@@ -363,7 +369,7 @@ async function handleRecommend(request, env) {
     const allRows = [];
     const top = [];
     let stepsUsed = 0;
-    const nameKey = (r) => (r.facility_name || "").trim();
+    const nameKey = (r) => (r.facility_name || "").replace(/\s+/g, ""); // 공백 무시 비교 ("못된 강아지"="못된강아지")
 
     for (let i = 0; i < ladder.length && top.length < limit; i++) {
       const step = ladder[i];
