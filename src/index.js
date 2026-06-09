@@ -12,6 +12,7 @@ export default {
 
     if (url.pathname.startsWith("/api/")) {
       if (url.pathname === "/api/recommend") return handleRecommend(request, env);
+      if (url.pathname === "/api/places") return handlePlaces(request, env);
       return json({ error: "not_found" }, 404);
     }
     return env.ASSETS.fetch(request);
@@ -176,6 +177,7 @@ function formatRow(r, group) {
   const name = r.is_program ? (r.program_name || r.facility_name) : r.facility_name;
   const where = [r.sido, r.sigungu].filter(Boolean).join(" ");
   return {
+    row_id: r.row_id,            // surrogate key — used to pin/share exact places
     content_id: r.content_id,
     is_program: !!r.is_program,
     name,
@@ -296,6 +298,29 @@ async function handleRecommend(request, env) {
     });
   } catch (e) {
     return json({ error: "query_failed", detail: String(e && e.message || e) }, 500);
+  }
+}
+
+// Fetch specific places by row_id (for shared "같이 가자" links). Order preserved.
+async function handlePlaces(request, env) {
+  if (request.method !== "GET") return json({ error: "method_not_allowed" }, 405);
+  const raw = new URL(request.url).searchParams.get("ids") || "";
+  const ids = raw
+    .split(",")
+    .map((s) => parseInt(s, 10))
+    .filter((n) => Number.isInteger(n) && n > 0)
+    .slice(0, 20);
+  if (ids.length === 0) return json({ ok: true, results: [] });
+  try {
+    const ph = ids.map(() => "?").join(",");
+    const { results } = await env.DB.prepare(
+      `SELECT ${SELECT_COLS} FROM solutions WHERE is_active = 1 AND row_id IN (${ph})`
+    ).bind(...ids).all();
+    const byId = new Map((results || []).map((r) => [r.row_id, r]));
+    const ordered = ids.map((id) => byId.get(id)).filter(Boolean).map((r) => formatRow(r, "norm"));
+    return json({ ok: true, results: ordered });
+  } catch (e) {
+    return json({ error: "query_failed", detail: String((e && e.message) || e) }, 500);
   }
 }
 

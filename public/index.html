@@ -583,6 +583,9 @@ let myAnimal = 'PSF';
 let myRegion = '';
 let myDistrict = '';
 let recoCond = {}; // showResult에서 채움 (API 실패 시 로컬 폴백용)
+let lastPlaceIds = [];        // 현재 추천 장소들의 row_id (공유 URL용)
+let lastBars = {e:50, s:50};  // 현재 결과의 에너지/사회 바 수치 (공유 URL용)
+let isSharedView = false;     // ?s= 링크로 진입한 화면인지
 
 // ══════════════════════════════════
 // 지역 드롭다운
@@ -752,17 +755,61 @@ async function renderCuration(group){
   const results = await apiRecommend(group);
   rxl.innerHTML = '';
   if (results && results.length) {
+    lastPlaceIds = results.map(r=>r.row_id).filter(Boolean);   // 공유용으로 보관
     results.forEach(r=>{
       const card = document.createElement('div'); card.className='rx-card';
       card.innerHTML = recoCardHTML(r);
       rxl.appendChild(card);
     });
   } else {
+    lastPlaceIds = []; // 로컬 폴백 데이터엔 row_id 없음 → 장소 공유 생략
     recommendPrograms(group, myAnimal, recoCond).forEach(p=>{
       const card = document.createElement('div'); card.className='rx-card';
       card.innerHTML = localCardHTML(p, group);
       rxl.appendChild(card);
     });
+  }
+}
+
+// ══════════════════════════════════
+// 공유 (URL base64url 인코딩 — 보안 아님, 한눈에 안 읽히게)
+// 형식: "1.동물.군.에너지.사회.row_id목록"
+// ══════════════════════════════════
+function b64urlEncode(str){ return btoa(str).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); }
+function b64urlDecode(t){ t=t.replace(/-/g,'+').replace(/_/g,'/'); while(t.length%4) t+='='; return atob(t); }
+
+function buildShareToken(){
+  const raw = `1.${myAnimal}.${myGroup}.${lastBars.e}.${lastBars.s}.${lastPlaceIds.join(',')}`;
+  return b64urlEncode(raw);
+}
+function decodeShare(token){
+  try {
+    const parts = b64urlDecode(token).split('.');
+    if (parts[0] !== '1') return null;
+    const [, a, g, e, s, p] = parts;
+    if (!TYPES[a] || !GROUP_INFO[g]) return null;
+    const clamp = v => Math.max(0, Math.min(100, parseInt(v,10) || 50));
+    const ids = (p||'').split(',').map(n=>parseInt(n,10)).filter(n=>Number.isInteger(n)&&n>0);
+    return { a, g, e:clamp(e), s:clamp(s), ids };
+  } catch(_){ return null; }
+}
+
+// 공유받은 화면: 고정된 row_id 장소들을 그대로 렌더 (추천 재조회 X)
+async function renderPinnedPlaces(ids){
+  const rxl = document.getElementById('rxlist');
+  document.getElementById('rx-lbl').textContent = '✨ 이 곳들, 같이 가볼래요?';
+  if (!ids || !ids.length){ rxl.innerHTML=''; return; }
+  rxl.innerHTML = `<div class="rx-card" style="text-align:center;color:var(--mint);opacity:.7">🌿 불러오는 중...</div>`;
+  let results = null;
+  try {
+    const res = await fetch('/api/places?ids='+encodeURIComponent(ids.join(',')));
+    if (res.ok){ results = (await res.json()).results; }
+  } catch(_){}
+  rxl.innerHTML = '';
+  if (results && results.length){
+    results.forEach(r=>{ const c=document.createElement('div'); c.className='rx-card'; c.innerHTML=recoCardHTML(r); rxl.appendChild(c); });
+  } else {
+    rxl.innerHTML = `<div class="rx-card" style="text-align:center;color:var(--mint);opacity:.7">추천을 불러오지 못했어요 🌧️</div>`;
   }
 }
 
@@ -780,13 +827,14 @@ function doLoad() {
 // ══════════════════════════════════
 // 결과 렌더
 // ══════════════════════════════════
-function showResult() {
-  myGroup = classifyGroup();
-  myAnimal = classifyAnimal();
+function showResult(shared) {
+  isSharedView = !!shared;
+  if (shared) { myGroup = shared.g; myAnimal = shared.a; }
+  else { myGroup = classifyGroup(); myAnimal = classifyAnimal(); }
   myRegion = document.getElementById('i-region').value;
   myDistrict = document.getElementById('i-district').value;
   const T = TYPES[myAnimal] || TYPES['PSF'];
-  const G = GROUP_INFO[myGroup];
+  const G = GROUP_INFO[myGroup] || GROUP_INFO['norm'];
   const cond = {
     space: (A.q4.q11||'indoor'),
     distance: (A.q4.q12||'30min'),
@@ -809,9 +857,12 @@ function showResult() {
   const phq2Pct = Math.round(((all.q1||0)+(all.q2||0))/6*100);
   const burnPct = Math.round(((all.q3||0)+(all.q4||0))/5*100);
   const socialPct = Math.round((3-(all.q8||0))/3*100);
+  const energyP = shared ? shared.e : (100-burnPct);
+  const socialP = shared ? shared.s : socialPct;
+  lastBars = { e: energyP, s: socialP };   // 공유용으로 보관
   const bd = document.getElementById('rbars'); bd.innerHTML = '';
-  [{l:'에너지 충전 수준', p:100-burnPct, c:'#c4924e'},
-   {l:'사회 연결 수준', p:socialPct, c:'#6bb880'},
+  [{l:'에너지 충전 수준', p:energyP, c:'#c4924e'},
+   {l:'사회 연결 수준', p:socialP, c:'#6bb880'},
    {l:'활동 선호도', p:myAnimal[0]==='A'?70:35, c:'#4aa8a5'}
   ].forEach(b => {
     const r = document.createElement('div'); r.className = 'srow';
@@ -846,7 +897,7 @@ function showResult() {
   const path = GROUP_PATH[myGroup] || [];
   let selectedStage = myGroup; // 기본은 현재 군
 
-  if (path.length > 0 && states_info) {
+  if (!shared && path.length > 0 && states_info) {
     sw.style.display = 'block';
     ss.innerHTML = '';
     // 현재 상태 표시
@@ -886,8 +937,13 @@ function showResult() {
     selectedStage = myGroup;
   }
 
-  // 프로그램 추천 (실제 DB 연동 /api/recommend, 기본: 현재 군)
-  renderCuration(selectedStage);
+  // 프로그램 추천: 공유 진입이면 고정 장소 그대로, 아니면 실제 DB 추천
+  if (shared) renderPinnedPlaces(shared.ids);
+  else renderCuration(selectedStage);
+
+  // 공유 진입 화면이면 "다시 하기" → "나도 테스트하기" CTA로
+  const reBtn = document.querySelector('.share-row button:last-child');
+  if (reBtn) reBtn.textContent = shared ? '🌲 나도 내 동물 찾기' : '🔄 다시 하기';
 
   // 다른 동물
   const oth = document.getElementById('others'); oth.innerHTML = '';
@@ -898,8 +954,8 @@ function showResult() {
     oth.appendChild(c);
   });
 
-  // 스토리지 저장
-  saveData();
+  // 스토리지 저장 (공유받은 화면은 내 기록을 덮어쓰지 않음)
+  if (!isSharedView) saveData();
   go('s-res');
 }
 
@@ -1050,9 +1106,13 @@ function startQ() {
 }
 function doShare() {
   const T = TYPES[myAnimal];
-  const msg = `나는 ${T.emoji} ${T.name}! 너는 어떤 회복 동물이야?\n우리 숲 테스트 해봐 🌲`;
-  if (navigator.share) navigator.share({title:'우리 숲',text:msg});
-  else { navigator.clipboard?.writeText(msg); alert('📋 복사됐어요! 친구에게 공유해봐요 🌿'); }
+  const url = location.origin + '/?s=' + buildShareToken();
+  const msg = `나는 ${T.emoji} ${T.name}! 내가 받은 추천이야 — 같이 가볼래? 🌲`;
+  if (navigator.share) navigator.share({title:'우리 숲', text:msg, url});
+  else {
+    navigator.clipboard?.writeText(msg + '\n' + url);
+    alert('📋 링크가 복사됐어요! 친구에게 공유해봐요 🌿');
+  }
 }
 function resetAll() {
   A = {q1:{},q2:{},q3:{},q4:{},q5:{}};
@@ -1070,6 +1130,14 @@ for(let i=0;i<16;i++){
   e.style.cssText=`left:${Math.random()*100}%;animation-duration:${9+Math.random()*13}s;animation-delay:${-Math.random()*22}s;font-size:${.8+Math.random()*1}rem`;
   fbg.appendChild(e);
 }
+
+// 공유 링크 진입: ?s=토큰 → 설문 건너뛰고 결과화면 직행
+(function(){
+  const token = new URLSearchParams(location.search).get('s');
+  if (!token) return;
+  const shared = decodeShare(token);
+  if (shared) showResult(shared);
+})();
 </script>
 </body>
 </html>
