@@ -122,7 +122,8 @@ select option{background:#1e3d2a}
 .rtag{background:rgba(58,122,80,.2);border-radius:999px;padding:2px 8px;font-size:.67rem;color:var(--sage)}
 .rx-msg{font-size:.78rem;color:var(--gold);opacity:.85;background:rgba(196,146,78,.1);border-radius:8px;padding:6px 10px;line-height:1.55}
 .rx-warn{font-size:.72rem;color:#e0a85a;background:rgba(196,146,78,.08);border-radius:8px;padding:5px 10px;margin-top:6px;line-height:1.5}
-.rx-link{display:inline-block;margin-top:7px;font-size:.74rem;color:var(--sage);text-decoration:none;opacity:.85}
+.rx-links{display:flex;gap:14px;margin-top:8px}
+.rx-link{font-size:.74rem;color:var(--sage);text-decoration:none;opacity:.85}
 .rx-link:hover{opacity:1;text-decoration:underline}
 
 /* Leaflet 다크 테마 오버라이드 */
@@ -736,8 +737,10 @@ function recoCardHTML(r){
   const tags = (r.tags||[]).map(t=>`<span class="rtag">${esc(t)}</span>`).join('');
   const warn = r.time_warning ? `<div class="rx-warn">⚠️ 방문 전 운영시간을 꼭 확인하세요 (마을별 상이)</div>` : '';
   const msg  = r.comment ? `<div class="rx-msg">💬 ${esc(r.comment)}</div>` : '';
-  const link = r.homepage_url ? `<a class="rx-link" href="${esc(r.homepage_url)}" target="_blank" rel="noopener">홈페이지 자세히 보기 ↗</a>` : '';
-  return `<div class="rx-top"><div class="rx-ico">${esc(r.emoji)||'🌿'}</div><div class="rx-info"><h4>${esc(r.name)}</h4><p>${sub}</p><div class="rx-tags">${tags}</div></div></div>${warn}${msg}${link}`;
+  const mapLink  = r.map_url ? `<a class="rx-link" href="${esc(r.map_url)}" target="_blank" rel="noopener">📍 지도·길찾기</a>` : '';
+  const homeLink = r.homepage_url ? `<a class="rx-link" href="${esc(r.homepage_url)}" target="_blank" rel="noopener">홈페이지 ↗</a>` : '';
+  const links = (mapLink || homeLink) ? `<div class="rx-links">${mapLink}${homeLink}</div>` : '';
+  return `<div class="rx-top"><div class="rx-ico">${esc(r.emoji)||'🌿'}</div><div class="rx-info"><h4>${esc(r.name)}</h4><p>${sub}</p><div class="rx-tags">${tags}</div></div></div>${warn}${msg}${links}`;
 }
 
 // 로컬 폴백 카드 (기존 하드코딩 데이터)

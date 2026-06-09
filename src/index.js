@@ -304,6 +304,9 @@ function formatRow(r, group) {
     operating_remark: r.operating_hours_remark,
     comment: pickComment(r, group),
     homepage_url: r.homepage_url,
+    // 네이버 지도 검색 링크 — 이름+시군구로 항상 생성 (homepage_url은 18%만 채워져 있어 길찾기 보강)
+    map_url: "https://map.naver.com/p/search/" +
+      encodeURIComponent(`${r.facility_name || name} ${r.sigungu || ""}`.trim()),
     emoji: pickEmoji(r),
     info: `${where} · ${priceLabel(r.price)}`,
     score: r.score,
