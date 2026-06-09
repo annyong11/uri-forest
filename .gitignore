@@ -1,0 +1,13 @@
+node_modules/
+.wrangler/
+.dev.vars
+*.log
+.DS_Store
+
+# Generated bulk-import SQL (~28MB). Regenerate from data/ CSVs with:
+#   python3 scripts/csv_to_sql.py
+db/data.sql
+
+# Local sqlite validation scratch
+*.sqlite
+*.sqlite3

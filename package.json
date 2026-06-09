@@ -1,0 +1,16 @@
+{
+  "name": "uri-forest",
+  "private": true,
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "build:data": "python3 scripts/csv_to_sql.py",
+    "db:schema:local": "wrangler d1 execute uri-forest-db --local --file=./db/schema.sql",
+    "db:data:local": "wrangler d1 execute uri-forest-db --local --file=./db/data.sql",
+    "db:schema:remote": "wrangler d1 execute uri-forest-db --remote --file=./db/schema.sql",
+    "db:data:remote": "wrangler d1 execute uri-forest-db --remote --file=./db/data.sql"
+  },
+  "devDependencies": {
+    "wrangler": "^4"
+  }
+}

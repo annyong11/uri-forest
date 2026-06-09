@@ -1,0 +1,38 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "uri-forest",
+  "main": "./src/index.js",
+  "compatibility_date": "2026-06-09",
+
+  // Keep the *.workers.dev URL alive as a fallback alongside the custom domain.
+  "workers_dev": true,
+
+  // --- Custom domain (zone already on this Cloudflare account) ---
+  // Attaches the apex uriforest.com to this Worker; Cloudflare provisions the
+  // DNS record + SSL cert automatically.
+  "routes": [
+    { "pattern": "uriforest.com", "custom_domain": true }
+  ],
+
+  // --- Static Assets: serve ./public, expose ASSETS binding for fallthrough ---
+  // index.html is auto-served at "/". This is a classic static site (NOT a
+  // history-API SPA), so a missing asset 404s normally ("none").
+  "assets": {
+    "directory": "./public/",
+    "binding": "ASSETS",
+    "not_found_handling": "none",
+    // Run the Worker FIRST only for /api/*; all other paths are served straight
+    // from static assets without spending a Worker invocation.
+    "run_worker_first": ["/api/*"]
+  },
+
+  // --- D1 binding: available in the Worker as env.DB ---
+  // database_id is filled in after `wrangler d1 create uri-forest-db` (see DEPLOY.md).
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "uri-forest-db",
+      "database_id": "ec401e50-5434-4449-a195-95342b5f8c63"
+    }
+  ]
+}
