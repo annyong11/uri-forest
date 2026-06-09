@@ -990,11 +990,16 @@ async function renderMap() {
 
   // Leaflet 지도 (최초 1회 init, 이후 마커만 갱신)
   if (!leafMap && window.L) {
-    leafMap = L.map('map', { zoomControl:true, attributionControl:false, scrollWheelZoom:true })
-      .setView([36.4, 127.8], 6);
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+    const KR_BOUNDS = [[32.8, 124.8], [39.0, 130.4]]; // 남한+제주만 보이도록 영역 클램프
+    leafMap = L.map('map', {
+      zoomControl:true, attributionControl:false, scrollWheelZoom:true,
+      minZoom:6, maxZoom:16, maxBounds:KR_BOUNDS, maxBoundsViscosity:1.0,
+    });
+    // dark_nolabels = 도시명 라벨 없는 미니멀 다크 타일
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png',
       { subdomains:'abcd', minZoom:5, maxZoom:16 }).addTo(leafMap);
     markerLayer = L.layerGroup().addTo(leafMap);
+    leafMap.fitBounds([[33.0, 125.9], [38.6, 129.7]]); // 남한 본토+제주 프레이밍
   }
   if (!leafMap) return; // Leaflet 로드 실패 시 통계 카드만
   leafMap.invalidateSize();
