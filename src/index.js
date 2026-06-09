@@ -357,11 +357,13 @@ async function handleRecommend(request, env) {
     const PER_CAT = 2;
 
     const seenCat = {};
+    const seenNames = new Set();   // 같은 시설명 중복 제거 (content_id 중복으로 한 시설이 여러 행)
     const inTop = new Set();
     const inAll = new Set();
     const allRows = [];
     const top = [];
     let stepsUsed = 0;
+    const nameKey = (r) => (r.facility_name || "").trim();
 
     for (let i = 0; i < ladder.length && top.length < limit; i++) {
       const step = ladder[i];
@@ -374,9 +376,12 @@ async function handleRecommend(request, env) {
         if (!inAll.has(r.row_id)) { inAll.add(r.row_id); allRows.push(r); }
         if (top.length >= limit) continue;
         if (inTop.has(r.row_id)) continue;
+        const nm = nameKey(r);
+        if (nm && seenNames.has(nm)) continue;          // skip same-facility duplicates
         const key = r.category_key || "기타";
         if ((seenCat[key] || 0) >= PER_CAT) continue;   // respect the cap
         inTop.add(r.row_id);
+        seenNames.add(nm);
         seenCat[key] = (seenCat[key] || 0) + 1;
         top.push(r);
       }
@@ -389,7 +394,9 @@ async function handleRecommend(request, env) {
       for (const r of allRows) {
         if (top.length >= limit) break;
         if (inTop.has(r.row_id)) continue;
-        inTop.add(r.row_id); top.push(r); capRelaxed = true;
+        const nm = nameKey(r);
+        if (nm && seenNames.has(nm)) continue;          // dedup names in backfill too
+        inTop.add(r.row_id); seenNames.add(nm); top.push(r); capRelaxed = true;
       }
     }
 
