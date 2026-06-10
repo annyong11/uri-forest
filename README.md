@@ -3,7 +3,7 @@
 고립·은둔 청년을 위한 **회복 동물 테스트 + 맞춤 문화 추천** 웹앱.
 16문항으로 사용자를 군(群) + 동물유형(3축)으로 분류하고, 5.8만 건 문화 자원 DB에서 성향·지역·조건에 맞는 장소/프로그램을 추천합니다.
 
-🌐 **Live: https://uriforest.com** (fallback: https://uri-forest.muuty-me.workers.dev)
+🌐 **Live: https://uriforest.com**
 
 ## 스택
 
