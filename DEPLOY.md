@@ -79,6 +79,35 @@ npx wrangler deploy
 
 ---
 
+## 3-1. 자동 배포 (GitHub Actions)
+
+`main` 브랜치에 push 되면 [.github/workflows/deploy.yml](.github/workflows/deploy.yml) 이
+`wrangler deploy` 를 실행해 코드+정적자산을 자동 배포합니다. (문서/`data` CSV만 바뀐
+커밋은 스킵. GitHub → **Actions** 탭에서 *Run workflow* 로 수동 실행도 가능.)
+
+> 자동배포는 **Worker 코드와 `public/` 만** 배포합니다. D1 데이터 적재(2번)는 쓰기 한도
+> 때문에 의도적으로 제외 — 데이터 갱신이 필요하면 그때만 로컬에서 `--remote` 로 1회 적재.
+
+### GitHub Secrets (Settings → Secrets and variables → Actions → New repository secret)
+
+| 이름 | 값 |
+|---|---|
+| `CLOUDFLARE_API_TOKEN` | 아래에서 발급한 토큰 |
+| `CLOUDFLARE_ACCOUNT_ID` | `5170accd9882f12c3efe11929ae768eb` |
+
+**API 토큰 발급** — https://dash.cloudflare.com/profile/api-tokens → *Create Token*
+→ **"Edit Cloudflare Workers"** 템플릿 사용. 권한이 다음을 포함해야 합니다(필요 시 행 추가):
+
+- Account · **Workers Scripts** · Edit
+- Account · **D1** · Edit
+- Account · **Account Settings** · Read
+- Zone · **Workers Routes** · Edit  — `uriforest.com` 존 (커스텀 도메인 라우트용)
+
+> 토큰은 발급 시 **딱 한 번만** 표시됩니다. 복사해서 위 `CLOUDFLARE_API_TOKEN` 에 붙여넣으세요.
+> `CLOUDFLARE_ACCOUNT_ID` 는 비밀이 아니지만, 워크플로 일관성을 위해 동일하게 Secret 으로 둡니다.
+
+---
+
 ## 로컬 개발 (인증 불필요)
 
 ```bash

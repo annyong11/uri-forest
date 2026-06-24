@@ -1,0 +1,43 @@
+name: Deploy to Cloudflare Workers
+
+# main 에 push 되면 자동 배포. Actions 탭에서 수동 실행(Run workflow)도 가능.
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "**.md"        # 문서만 바뀐 커밋은 배포 스킵
+      - "data/**"      # CSV 원본은 배포 대상 아님
+  workflow_dispatch: {}
+
+# 동시에 여러 배포가 겹치지 않도록: 새 push 가 오면 진행 중인 배포는 취소
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # wrangler.jsonc 에 database_id 가 이미 박혀 있고 정적자산(public/)도 같은
+      # Worker 로 배포되므로, 이 한 단계가 코드+UI 를 모두 배포합니다.
+      # (D1 데이터 적재는 쓰기 한도 때문에 자동배포에 포함하지 않음 — DEPLOY.md 2번 참고)
+      - name: Deploy
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy
