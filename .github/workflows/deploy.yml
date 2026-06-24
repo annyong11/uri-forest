@@ -26,7 +26,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22   # wrangler 4 는 Node 22+ 필수 (20 이면 구버전으로 폴백돼 실패)
           cache: npm
 
       - name: Install dependencies
