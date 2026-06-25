@@ -1121,8 +1121,8 @@ async function renderMap() {
       zoomControl:true, attributionControl:false, scrollWheelZoom:true,
       minZoom:6, maxZoom:16, maxBounds:KR_BOUNDS, maxBoundsViscosity:1.0,
     });
-    // dark_nolabels = 도시명 라벨 없는 미니멀 다크 타일
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png',
+    // light_nolabels = 도시명 라벨 없는 미니멀 라이트 타일
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png',
       { subdomains:'abcd', minZoom:5, maxZoom:16 }).addTo(leafMap);
     markerLayer = L.layerGroup().addTo(leafMap);
     leafMap.fitBounds([[33.0, 125.9], [38.6, 129.7]]); // 남한 본토+제주 프레이밍
@@ -1142,7 +1142,7 @@ async function renderMap() {
     const domCode = dom ? dom[0] : 'PSF';
     const T = TYPES[domCode] || TYPES['PSF'];
     const size = Math.round(34 + (cnt/maxCnt)*30);
-    const op = (hlAnimal && !(dom && dom[0]===hlAnimal)) ? 0.25 : 1;
+    const op = (hlAnimal && domCode!==hlAnimal) ? 0.25 : 1;
     const imgSize = Math.round(size*0.55);
     const html = `<div style="width:${size}px;height:${size}px;border-radius:50%;background:${T.color}cc;border:2px solid ${T.color};display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:0 0 14px ${T.color}99;opacity:${op}">`
       + `<div style="line-height:1">${getTypeImg(domCode, imgSize)}</div>`
@@ -1191,11 +1191,14 @@ function exploreAnimal(code) {
 }
 
 function goChat(animalCode, regionName) {
-  const T = TYPES[animalCode] || TYPES['PSF'];
+  const T = TYPES[animalCode] || TYPES[myAnimal];
   document.getElementById('chatEmoji').innerHTML = getTypeImg(animalCode, 48);
-  document.getElementById('chatTitle').textContent = (regionName ? regionName + ' · ' : '') + T.name + ' 친구들의 모임';
-  document.getElementById('chatDesc').textContent = '같은 회복 여정을 걷는 친구들과 이야기 나눠보세요. 부담 없이, 천천히요.';
-  document.getElementById('kakaoLink').href = KAKAO_LINKS[animalCode] || KAKAO_LINKS['PSF'];
+  const regionLabel = regionName ? `${regionName} · ` : '';
+  document.getElementById('chatTitle').textContent = regionLabel + T.name + ' 친구들의 모임';
+  const regionDesc = regionName ? `${regionName} 지역의 ` : '';
+  document.getElementById('chatDesc').textContent =
+    `${regionDesc}${T.name}과 같은 회복 여정을 걷는 친구들이 모여있어요.\n지역은 달라도 비슷한 감각을 가진 친구들과 천천히 이야기 나눠보세요.`;
+  document.getElementById('kakaoLink').href = KAKAO_LINKS[animalCode] || KAKAO_LINKS[myAnimal];
   go('s-chat');
 }
 
