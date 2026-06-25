@@ -52,48 +52,43 @@ const SIDO_ONLY_REGIONS = new Set(["세종"]);
 
 const SPACE_MAP = { indoor: "실내", outdoor: "야외" };
 
-// Which curation comment to prefer per group. comment_type_A/B are currently
-// empty in the data, so this falls back to comment_default — but the logic is ready.
-const GROUP_COMMENT = {
-  cli: "A", burn: "A", mix: "A", // 위로/내면치유형
-  isol: "B", norm: "B",          // 도전/사회복귀형
-};
-
 // ──────────────────────────────────────────────────────────────────────────
 // Filter fragment builders (all SQL fragments come from whitelisted enums — no
 // user free-text is ever concatenated into SQL; user strings are bound as params)
 // ──────────────────────────────────────────────────────────────────────────
 
 // 군(group) filter, re-expressed against DB columns (validated for selectivity).
+// 정적(passive) intent now maps to axis_ap='P' (사고형) — the new file has no
+// activity_nature column. The old cli "price = 0" hard filter is dropped: price is
+// unknown for ~96.6% of rows, so requiring it would collapse cli to a handful of rows.
 function groupPredicate(group) {
   switch (group) {
-    case "cli":  return "solo_ok = 1 AND activity_nature = '정적' AND price = 0";
-    case "burn": return "activity_nature = '정적'";
+    case "cli":  return "solo_ok = 1 AND axis_ap = 'P'";
+    case "burn": return "axis_ap = 'P'";
     case "isol": return "solo_ok = 1";
-    case "mix":  return "solo_ok = 1 AND activity_nature = '정적'";
+    case "mix":  return "solo_ok = 1 AND axis_ap = 'P'";
     case "norm":
     default:     return "1 = 1";
   }
 }
 
+// price is real data for only ~3.4% of rows; the rest are price_known=0 (UNKNOWN, not
+// free). Unknown-price rows stay ELIGIBLE for cheap/mid (so a budget filter doesn't
+// wipe the catalog); only 'free' requires an explicit is_free flag.
 function costPredicate(cost) {
   switch (cost) {
-    case "free":  return "price = 0";
-    case "cheap": return "price < 10000";
-    case "mid":   return "price < 30000";
+    case "free":  return "is_free = 1";
+    case "cheap": return "(price_known = 0 OR price < 10000)";
+    case "mid":   return "(price_known = 0 OR price < 30000)";
     case "high":
     default:      return "1 = 1";
   }
 }
 
-// time_preference OR-match via precomputed flags (상관없음 => tp_any acts as wildcard).
-function timePredicate(time) {
-  switch (time) {
-    case "day":   return "(tp_day = 1 OR tp_any = 1)";
-    case "night": return "(tp_night = 1 OR tp_any = 1)";
-    case "weekend":
-    default:      return "1 = 1"; // weekend is a free-day pref, not a time-of-day filter
-  }
+// Time-of-day filtering is inert: the new file has no time_preference and open/close
+// hours for only ~8% of rows. Kept as a no-op so the body.time param stays accepted.
+function timePredicate(_time) {
+  return "1 = 1";
 }
 
 // Geographic predicate. Returns { sql, params }.
@@ -113,18 +108,20 @@ function geoPredicate(region, district, distance, sidoOnly) {
 // Candidate query
 // ──────────────────────────────────────────────────────────────────────────
 
-// Tunable ranking weights. Personality matches dominate; the popularity/preference
-// prior (base_score, 0..5) is rescaled into [0, W.pop) so it only ever BREAKS TIES
-// among equal-fit places — it can never outrank a better personality match.
-// (Previously raw base_score up to 5.0 could leapfrog a perfect match.)
+// Tunable ranking weights. Personality matches dominate. base_score is constant 0 in
+// the current dataset (no preference scores exist), so the W.pop term contributes
+// nothing — ranking is personality fit + RANDOM() tie-break. The term/weight are kept
+// so a popularity prior can be reintroduced later without touching the formula.
 const W = { ap: 2.0, ts: 2.0, space: 1.0, pop: 0.9 };
 
 const SELECT_COLS = `
   row_id, content_id, is_program, facility_name, program_name,
-  sido, sigungu, address, latitude, longitude, price, parking_fee,
-  time_preference, is_time_fixed, operating_hours_remark,
-  user_type_tag, activity_nature, indoor_outdoor, interaction_level,
-  comment_default, comment_type_A, comment_type_B, homepage_url,
+  source, large_category, mid_category,
+  sido, sigungu, address, latitude, longitude,
+  price, is_free, price_known,
+  is_time_fixed, operating_hours_remark,
+  indoor_outdoor, social_mode, social_intensity_score, content_mode,
+  description, homepage_url,
   category_key, is_outdoor_park, base_score`;
 
 async function fetchCandidates(env, { ap, ts, spaceDb, geo, group, cost, time, poolLimit }) {
@@ -262,10 +259,9 @@ function composeComment(r, group, nudge = 0) {
 }
 
 function pickComment(r, group) {
-  const want = GROUP_COMMENT[group];
-  if (want === "A" && r.comment_type_A) return r.comment_type_A; // 향후 LLM 생성분 우선
-  if (want === "B" && r.comment_type_B) return r.comment_type_B;
-  return composeComment(r, group) || r.comment_default || "";
+  // Attribute-based composer (장소 성격 × 군 톤). The new file has no curated comment
+  // columns, so this is the only source. composeComment always returns a string.
+  return composeComment(r, group);
 }
 
 // Map rows to output, ensuring no two cards share the same generated comment
@@ -283,8 +279,11 @@ function formatResults(rows, group) {
 }
 
 function formatRow(r, group) {
-  const tags = (r.user_type_tag || "")
-    .split(",").map((t) => t.trim()).filter(Boolean);
+  // UI chips: synthesized from the new taxonomy (no user_type_tag column anymore).
+  // dedup keeps the chip row tidy when large_category == mid_category.
+  const tags = [...new Set(
+    [r.large_category, r.mid_category, r.social_mode].filter(Boolean)
+  )];
   const name = r.is_program ? (r.program_name || r.facility_name) : r.facility_name;
   const where = [r.sido, r.sigungu].filter(Boolean).join(" ");
   return {
@@ -299,14 +298,15 @@ function formatRow(r, group) {
     lng: r.longitude,
     price: r.price,
     price_label: priceLabel(r.price),
-    parking_free: r.parking_fee === 0,
     tags,
     category_key: r.category_key,
     indoor_outdoor: r.indoor_outdoor,
-    activity_nature: r.activity_nature,
-    interaction_level: r.interaction_level,
-    time_preference: r.time_preference,
-    time_warning: r.is_time_fixed === 0, // "방문 전 운영시간 확인" 안내 대상
+    social_mode: r.social_mode,
+    content_mode: r.content_mode,
+    description: r.description,
+    // "방문 전 운영시간 확인" 안내. is_time_fixed=0 이 신규 데이터의 92.5% 기본값이라
+    // 무조건 켜면 노이즈가 됨 → 운영시간이 실제로 중요한 실내 시설/프로그램에만 표시.
+    time_warning: r.is_time_fixed === 0 && (r.indoor_outdoor !== "야외" || !!r.is_program),
     operating_remark: r.operating_hours_remark,
     comment: pickComment(r, group),
     homepage_url: r.homepage_url,
@@ -354,11 +354,10 @@ async function handleRecommend(request, env) {
     // tightest step first; only widen when the cap can't be satisfied locally.
     // This keeps the park/forest flood capped instead of padding with duplicates.
     const ladder = [
-      { distance, cost, time, group },                            // 1) as requested
-      { distance: "1h", cost, time, group },                      // 2) widen to province
-      { distance: "1h", cost: "high", time, group },              // 3) drop budget cap
-      { distance: "1h", cost: "high", time: "weekend", group },   // 4) drop time-of-day
-      { distance: "1h", cost: "high", time: "weekend", group: "norm" }, // 5) loosen group
+      { distance, cost, time, group },                       // 1) as requested
+      { distance: "1h", cost, time, group },                 // 2) widen to province
+      { distance: "1h", cost: "high", time, group },         // 3) drop budget cap
+      { distance: "1h", cost: "high", time, group: "norm" }, // 4) loosen group
     ];
     const PER_CAT = 2;
 
@@ -375,7 +374,7 @@ async function handleRecommend(request, env) {
       const step = ladder[i];
       const geo = geoPredicate(region, district, step.distance, false);
       const rows = await fetchCandidates(env, {
-        ap, ts, spaceDb, geo, group: step.group, cost: step.cost, time: step.time, poolLimit: 120,
+        ap, ts, spaceDb, geo, group: step.group, cost: step.cost, time: step.time, poolLimit: 300,
       });
       stepsUsed = i;
       for (const r of rows) {
@@ -393,16 +392,23 @@ async function handleRecommend(request, env) {
       }
     }
 
-    // Last resort: only if even the widest, group-loosened search couldn't find
-    // `limit` diverse items, pad ignoring the cap so the UI still gets a full set.
+    // Last resort: if the capped pass came up short, RAISE the per-category cap one
+    // step at a time (3, 4, … up to limit) instead of removing it outright. This adds
+    // the minimum extra concentration needed — e.g. if a park-dominated pool has a
+    // single 미술관, that 미술관 is taken before a 3rd park — so the park/forest flood
+    // stays as contained as the available candidates allow.
     let capRelaxed = false;
-    if (top.length < limit) {
+    for (let cap = PER_CAT + 1; top.length < limit && cap <= limit; cap++) {
       for (const r of allRows) {
         if (top.length >= limit) break;
         if (inTop.has(r.row_id)) continue;
         const nm = nameKey(r);
         if (nm && seenNames.has(nm)) continue;          // dedup names in backfill too
-        inTop.add(r.row_id); seenNames.add(nm); top.push(r); capRelaxed = true;
+        const key = r.category_key || "기타";
+        if ((seenCat[key] || 0) >= cap) continue;
+        inTop.add(r.row_id); seenNames.add(nm);
+        seenCat[key] = (seenCat[key] || 0) + 1;
+        top.push(r); capRelaxed = true;
       }
     }
 
