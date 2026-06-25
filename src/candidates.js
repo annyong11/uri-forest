@@ -41,5 +41,8 @@ export async function fetchCandidates(env, { ap, ts, spaceDb, geo, group, cost, 
      LIMIT ?`;
   const params = [ap, ts, ts, spaceDb, ...geo.params, poolLimit];
   const { results } = await env.DB.prepare(sql).bind(...params).all();
-  return results || [];
+  let rows = results || [];
+  // GPS 모드: 바운딩 박스로 받은 뒤 정확한 반경 원으로 코너를 깎는다(박스 ⊃ 원).
+  if (geo.within) rows = rows.filter(geo.within);
+  return rows;
 }

@@ -22,13 +22,39 @@ export function pickEmoji(r) {
   return "🏛️";
 }
 
+// #2: 프로그램명 정리. 소스가 "체험A+체험B+체험C…"로 길게 나열되거나
+// "[기관명] 분기/구분 [실제 제목]" 대괄호 형식이라 카드 제목이 지저분 → 한 줄로 정돈.
+export function cleanProgramName(s) {
+  if (!s) return "";
+  s = String(s).trim();
+  // 끝에 "[실제 제목]"이 붙는 도서관/기관 형식이면 그 제목을 우선 사용.
+  const tail = s.match(/\[([^[\]]{2,})\]\s*$/);
+  if (tail) return tail[1].trim();
+  // 선행 "[기관명]" 접두 제거.
+  s = s.replace(/^\s*\[[^[\]]+\]\s*/, "").trim();
+  // "+" 또는 "/" 로 3개 이상 길게 붙은 나열 → "첫 항목 외 N개".
+  // 단, 괄호 안의 +,/ 는 무시하고 최상위 레벨에서만 분리(괄호 깨짐·개수 부풀림 방지).
+  const parts = [];
+  let depth = 0, cur = "";
+  for (const ch of s) {
+    if (ch === "(") depth++;
+    else if (ch === ")") depth = Math.max(0, depth - 1);
+    if ((ch === "+" || ch === "/") && depth === 0) { parts.push(cur); cur = ""; }
+    else cur += ch;
+  }
+  parts.push(cur);
+  const items = parts.map((x) => x.trim()).filter(Boolean);
+  if (items.length >= 3) return `${items[0]} 외 ${items.length - 1}개`;
+  return s;
+}
+
 export function formatRow(r, group) {
   // UI chips: synthesized from the new taxonomy (no user_type_tag column anymore).
   // dedup keeps the chip row tidy when large_category == mid_category.
   const tags = [...new Set(
     [r.large_category, r.mid_category, r.social_mode].filter(Boolean)
   )];
-  const name = r.is_program ? (r.program_name || r.facility_name) : r.facility_name;
+  const name = r.is_program ? (cleanProgramName(r.program_name) || r.facility_name) : r.facility_name;
   const where = [r.sido, r.sigungu].filter(Boolean).join(" ");
   return {
     row_id: r.row_id,            // surrogate key — used to pin/share exact places

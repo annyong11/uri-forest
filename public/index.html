@@ -619,18 +619,27 @@ function requestGeolocation() {
     return;
   }
   btn.disabled = true;
-  btn.textContent = '\ud83d\udccd \uc704\uc824 \ucd95\uc778 \uc911...';
+  btn.textContent = '📍 위치 확인 중...';
   statusEl.style.display = 'block';
-  statusEl.textContent = '\ubcfc\ub769\uc808 \uc0c1\ub2e8\uc758 \uc704\uc824 \uacc4\uacf5 \uc694\uad6c\ub9c8\ub960 \uacc4\uacf5\ud574\uc8fc\uc8fc\uc138\uc694';
+  statusEl.textContent = '브라우저 상단의 위치 권한 요청을 허용해 주세요.';
+
+  // 한 번만 처리되도록 가드. 권한 팝업을 방치하면 브라우저가 timeout 을 카운트하지 않아
+  // 두 콜백 모두 끝내 안 오는 경우가 있다 → wall-clock 폴백으로 무한 로딩을 차단.
+  let settled = false;
+  const finish = (fn) => { if (settled) return; settled = true; clearTimeout(guard); fn(); };
+  const guard = setTimeout(() => finish(() => {
+    statusEl.textContent = '위치 확인이 지연돼 시·군·구 기준으로 보여드릴게요.';
+    useDistrictOnly();
+  }), 11000);
 
   navigator.geolocation.getCurrentPosition(
-    (pos) => {
+    (pos) => finish(() => {
       myCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
       statusEl.textContent = '✅ 위치를 확인했어요. 정확한 추천을 준비할게요';
       go('s-curate');
       renderCuration(myGroup);
-    },
-    (err) => {
+    }),
+    (err) => finish(() => {
       myCoords = null;
       btn.disabled = false;
       btn.textContent = '위치 허용하고 보기';
@@ -639,7 +648,7 @@ function requestGeolocation() {
       else if (err.code === err.TIMEOUT) msg = '위치 확인이 너무 오래 걸려요.';
       statusEl.textContent = msg + ' 시·군·구 기준으로 보여드릴게요.';
       setTimeout(() => { useDistrictOnly(); }, 1200);
-    },
+    }),
     { enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 }
   );
 }
@@ -786,7 +795,9 @@ async function apiRecommend(group){
 
 // API 결과 카드 (실제 DB)
 function recoCardHTML(r){
-  const sub = [r.where, r.price_label, r.indoor_outdoor].filter(Boolean).map(esc).join(' · ');
+  // 프로그램은 제목이 프로그램명이라 길찾기 목적지(시설)와 달라 헷갈림 → 시설명을 함께 표기
+  const venue = (r.is_program && r.facility_name && r.facility_name !== r.name) ? ('🏛️ ' + r.facility_name) : '';
+  const sub = [venue, r.where, r.price_label, r.indoor_outdoor].filter(Boolean).map(esc).join(' · ');
   const tags = (r.tags||[]).map(t=>`<span class="rtag">${esc(t)}</span>`).join('');
   const warn = r.time_warning ? `<div class="rx-warn">⚠️ 방문 전 운영시간을 꼭 확인하세요 (마을별 상이)</div>` : '';
   const msg  = r.comment ? `<div class="rx-msg">💬 ${esc(r.comment)}</div>` : '';
