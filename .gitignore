@@ -11,3 +11,7 @@ db/data.sql
 # Local sqlite validation scratch
 *.sqlite
 *.sqlite3
+
+# Python bytecode cache (scripts/csv_to_sql.py)
+__pycache__/
+*.pyc
