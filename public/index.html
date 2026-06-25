@@ -131,7 +131,7 @@ select option{background:#EAF4E6}
 .leaflet-container{background:#E8F2E4;font-family:'Gowun Dodum',serif}
 .leaflet-div-icon{background:transparent;border:none}
 .uri-marker{cursor:pointer}
-.leaflet-tooltip{background:rgba(255,255,255,.92);border:1px solid rgba(107,184,128,.3);color:#e8f0e8;border-radius:8px;font-size:.76rem;line-height:1.5;box-shadow:0 4px 16px rgba(0,0,0,.45);padding:6px 9px}
+.leaflet-tooltip{background:rgba(255,255,255,.92);border:1px solid rgba(107,184,128,.3);color:#1a2e1a;border-radius:8px;font-size:.76rem;line-height:1.5;box-shadow:0 4px 16px rgba(0,0,0,.45);padding:6px 9px}
 .leaflet-tooltip-top::before{border-top-color:rgba(107,184,128,.3)}
 .leaflet-bar a{background:#fff;color:#9fd4b0;border-color:rgba(107,184,128,.2)}
 .leaflet-bar a:hover{background:#EAF4E6}
@@ -355,12 +355,25 @@ select option{background:#EAF4E6}
 <div class="screen" id="s-map" style="padding-top:24px">
   <span class="badge">🗺️ 우리 숲 지도</span>
   <div style="font-family:'Black Han Sans',sans-serif;font-size:1.3rem;color:var(--white)">전국 회복 동물 분포</div>
-  <p style="font-size:.78rem;color:var(--mint);margin:2px 0 0">지역을 눌러 비슷한 동물 친구들을 만나보세요</p>
+  <p style="font-size:.78rem;color:var(--mint);margin:2px 0 8px">지역을 눌러 비슷한 동물 친구들을 만나보세요</p>
+
+  <!-- ★ 추가: 내 지역 바로가기 버튼 -->
+  <button id="btnMyRegion" class="btn-p" style="margin-bottom:12px"
+    onclick="goChat(myAnimal, myRegion)">
+    🐾 내 지역 동물 친구들 만나러 가기
+  </button>
+
   <div class="stats-grid" id="mapstats"></div>
   <div class="map-container">
     <div id="map" style="width:100%;height:440px;border-radius:16px;overflow:hidden;background:#E8F2E4"></div>
   </div>
   <div class="leg" id="mapleg"></div>
+
+  <!-- ★ 추가: 지도 클릭 유도 문구 (mapAction 뜨기 전까지 보임) -->
+  <div id="mapHint" style="width:100%;text-align:center;padding:12px 0;font-size:.82rem;color:var(--mint);opacity:.85">
+    🗺️ 지도 위를 눌러 비슷한 동물 친구들과 함께해봐요
+  </div>
+
   <div id="mapAction" class="card" style="width:100%;display:none;text-align:left"></div>
   <button class="btn-back" style="align-self:flex-start;margin-top:4px" onclick="go('s-res')">← 내 결과로</button>
 </div>
@@ -1099,6 +1112,10 @@ const SIDO_LATLNG = {
 };
 
 async function renderMap() {
+  const hint = document.getElementById('mapHint');
+  if (hint) hint.style.display = 'block';
+  const panel = document.getElementById('mapAction');
+  if (panel) panel.style.display = 'none';
   // 실제 DB 집계 조회
   let stats = { total:0, byRegion:{}, byAnimal:{} };
   try { const res = await fetch('/api/stats'); if (res.ok) stats = await res.json(); } catch(e){}
@@ -1139,8 +1156,8 @@ async function renderMap() {
     if (!cnt) return; // 참여자 있는 지역만
     const animals = reg.animals || {};
     const dom = Object.entries(animals).sort((a,b)=>b[1]-a[1])[0];
-    const domCode = dom ? dom[0] : 'PSF';
-    const T = TYPES[domCode] || TYPES['PSF'];
+    const domCode = dom ? dom[0] : myAnimal;
+    const T = TYPES[domCode] || TYPES[myAnimal];
     const size = Math.round(34 + (cnt/maxCnt)*30);
     const op = (hlAnimal && domCode!==hlAnimal) ? 0.25 : 1;
     const imgSize = Math.round(size*0.55);
@@ -1174,7 +1191,11 @@ const KAKAO_LINKS = {
 };
 
 function showMapAction(regionName, cnt, animalCode) {
-  const T = TYPES[animalCode] || TYPES['PSF'];
+  // ★ 추가: 힌트 문구 숨기기
+  const hint = document.getElementById('mapHint');
+  if (hint) hint.style.display = 'none';
+
+  const T = TYPES[animalCode] || TYPES[myAnimal];
   const panel = document.getElementById('mapAction');
   panel.style.display = 'block';
   panel.innerHTML = `
