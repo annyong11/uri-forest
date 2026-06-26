@@ -668,8 +668,8 @@ function requestGeolocation() {
   statusEl.style.display = 'block';
   statusEl.textContent = '브라우저 상단의 위치 권한 요청을 허용해 주세요.';
 
-  // 한 번만 처리되도록 가드. 권한 팝업을 방치하면 브라우저가 timeout 을 카운트하지 않아
-  // 두 콜백 모두 끝내 안 오는 경우가 있다 → wall-clock 폴백으로 무한 로딩을 차단.
+  // 한 번만 처리되도록 가드. 권한 팝업을 방치하면 브라우저가 timeout을 카운트하지 않아
+  // 두 경로 모두 끝나 안 오는 경우가 있다 → wall-clock 폴백으로 무한 로딩 차단.
   let settled = false;
   const finish = (fn) => { if (settled) return; settled = true; clearTimeout(guard); fn(); };
   const guard = setTimeout(() => finish(() => {
@@ -1218,7 +1218,7 @@ function goChat(animalCode, regionName) {
   document.getElementById('chatTitle').textContent = regionLabel + T.name + ' 친구들의 모임';
   const regionDesc = regionName ? `${regionName} 지역의 ` : '';
   document.getElementById('chatDesc').textContent =
-    `${regionDesc}${T.name}과 같은 회복 여정을 걷는 친구들이 모여있어요.\n지역은 달라도 비슷한 감각을 가진 친구들과 천천히 이야기 나눠보세요.`;
+    `${regionDesc}${T.name}와 같은 회복 여정을 걷는 친구들이 모여있어요.\n지역은 달라도 비슷한 감각을 가진 친구들과 천천히 이야기 나눠보세요.`;
   document.getElementById('kakaoLink').href = KAKAO_LINKS[animalCode] || KAKAO_LINKS[myAnimal];
   go('s-chat');
 }
