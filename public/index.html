@@ -315,7 +315,12 @@ select option{background:#EAF4E6}
     <div style="font-size:.86rem;color:var(--gold);margin-bottom:10px;display:flex;align-items:center;gap:6px">🌱 나의 회복 여정</div>
     <div id="stage-steps"></div>
   </div>
-  <button class="btn-p" onclick="go('s-consent')">📍 내 주변 문화 콘텐츠 보기 →</button>
+  <button class="btn-p" onclick="
+    document.getElementById('btnAllowGeo').disabled=false;
+    document.getElementById('btnAllowGeo').textContent='위치 허용하고 보기';
+    document.getElementById('geoStatus').style.display='none';
+    go('s-consent')
+  ">📍 내 주변 문화 콘텐츠 보기 →</button>  
   <button class="btn-map" onclick="go('s-map');renderMap()">🗺️ 우리 숲 지도 보기 — 다른 동물들은 어디에?</button>
   <div class="disclaimer">※ 이 테스트는 의학적 진단이 아닌, 나를 이해하기 위한 참고용 도구예요.<br>마음이 많이 힘들다면 언제든 <a href="tel:1577-0199">정신건강 위기상담 1577-0199</a> · <a href="tel:1393">자살예방 1393</a> (24시간)</div>
   <div class="share-row">
@@ -341,8 +346,12 @@ select option{background:#EAF4E6}
 
 <!-- ══ 위치기반 큐레이션 ══ -->
 <div class="screen" id="s-curate" style="padding-top:30px">
-  <button class="btn-back" onclick="go('s-res')">← 결과로</button>
-  <div id="stage-wrap2" style="width:100%;text-align:left;margin-top:6px"></div>
+<button class="btn-back" onclick="
+  document.getElementById('btnAllowGeo').disabled=false;
+  document.getElementById('btnAllowGeo').textContent='위치 허용하고 보기';
+  document.getElementById('geoStatus').style.display='none';
+  go('s-res')
+">← 결과로</button>  <div id="stage-wrap2" style="width:100%;text-align:left;margin-top:6px"></div>
   <div class="rx-wrap">
     <div class="rx-lbl" id="rx-lbl">✨ 나만의 문화 큐레이션</div>
     <div id="rxlist"></div>
