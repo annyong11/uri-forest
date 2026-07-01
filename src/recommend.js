@@ -31,7 +31,6 @@ export async function handleRecommend(request, env) {
   // ---- parse + validate (whitelist everything) ----
   const group = GROUPS.has(body.group) ? body.group : "norm";
   const animal = ["C0","C1","C2"].includes(body.animal) ? body.animal : "C0";
-  const animal = ["C0","C1","C2"].includes(body.animal) ? body.animal : "C0";
   const region = typeof body.region === "string" ? body.region : "";
   const district = typeof body.district === "string" ? body.district : "";
   const space = body.space === "outdoor" ? "outdoor" : body.space === "indoor" ? "indoor" : "";
