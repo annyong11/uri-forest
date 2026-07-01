@@ -61,7 +61,7 @@ export const SIDO_BBOX = {
 export const SPACE_MAP = { indoor: "실내", outdoor: "야외" };
 
 // Valid 군(group) keys; anything else is normalized to "norm".
-export const GROUPS = new Set(["cli", "burn", "isol", "mix", "norm"]);
+export const GROUPS = new Set(["cli", "isol", "norm"]);
 
 // Tunable ranking weights. Personality matches dominate. base_score is constant 0 in
 // the current dataset (no preference scores exist), so the W.pop term contributes
@@ -75,3 +75,23 @@ export const PER_CAT = 2;
 // How many top-scored candidates each relaxation step pulls from D1. Large enough that
 // lower-scored but more DIVERSE rows still enter the pool in park-heavy regions.
 export const POOL_LIMIT = 300;
+
+// 클러스터 → DB 축 매핑
+export const CLUSTER_AXIS = {
+  C0: { ap: "P", ts: "S" },  // 집콕힐링형
+  C1: { ap: "A", ts: "T" },  // 야외활동형
+  C2: { ap: "P", ts: "T" },  // 문화예술형
+};
+
+// 고립은둔 수준별 파라미터 (ipynb recommend_engine_v2 이식)
+export const ISOLATION_PARAMS = {
+  cli:  { programBonus: -30, socialFitRatio: -1.0 },  // 은둔
+  isol: { programBonus:   0, socialFitRatio:  0.5 },  // 고립
+  norm: { programBonus:  30, socialFitRatio:  1.0 },  // 일반
+};
+
+export const SOCIAL_FIT_WEIGHT = 15;
+
+// 무거운 역사 콘텐츠 감점
+export const HEAVY_HISTORY_KEYWORDS = ["고문", "대공분실", "학살", "순국", "항쟁", "의거", "추모", "희생자"];
+export const HEAVY_HISTORY_PENALTY  = { cli: -100, isol: -60, norm: 0 };

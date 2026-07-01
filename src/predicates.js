@@ -10,12 +10,10 @@ import { SIDO_MAP, SIDO_ONLY_REGIONS, SIDO_BBOX } from "./constants.js";
 // unknown for ~96.6% of rows, so requiring it would collapse cli to a handful of rows.
 export function groupPredicate(group) {
   switch (group) {
-    case "cli":  return "solo_ok = 1 AND axis_ap = 'P'";
-    case "burn": return "axis_ap = 'P'";
-    case "isol": return "solo_ok = 1";
-    case "mix":  return "solo_ok = 1 AND axis_ap = 'P'";
+    case "cli":  return "solo_ok = 1 AND social_intensity_score <= 1";  // 은둔: 혼자+저강도
+    case "isol": return "solo_ok = 1 AND social_intensity_score <= 2";  // 고립: 혼자+중강도
     case "norm":
-    default:     return "1 = 1";
+    default:     return "1 = 1";                                        // 일반: 제한 없음
   }
 }
 

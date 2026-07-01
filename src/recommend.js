@@ -3,10 +3,20 @@
 // relaxation ladder with a per-category diversity cap over the SQL-scored candidates.
 
 import { json } from "./http.js";
-import { GROUPS, SPACE_MAP, PER_CAT, POOL_LIMIT, RADIUS_KM, KR_BOUNDS } from "./constants.js";
-import { geoRadius, geoDistrict, gpsInRegion } from "./predicates.js";
+import { GROUPS, SPACE_MAP, PER_CAT, POOL_LIMIT, RADIUS_KM, KR_BOUNDS, CLUSTER_AXIS, HEAVY_HISTORY_KEYWORDS, HEAVY_HISTORY_PENALTY } from "./constants.js";import { geoRadius, geoDistrict, gpsInRegion } from "./predicates.js";
 import { fetchCandidates } from "./candidates.js";
 import { formatResults } from "./format.js";
+
+function applyHeavyHistoryPenalty(rows, group) {
+  const penalty = HEAVY_HISTORY_PENALTY[group] ?? 0;
+  if (penalty === 0) return rows;  // norm은 감점 없으니 바로 반환
+  return rows.map(r => {
+    const text = `${r.facility_name || ""} ${r.description || ""}`;
+    const hasKeyword = HEAVY_HISTORY_KEYWORDS.some(k => text.includes(k));
+    if (!hasKeyword) return r;
+    return { ...r, score: (r.score || 0) + penalty };
+  }).sort((a, b) => (b.score || 0) - (a.score || 0));
+}
 
 export async function handleRecommend(request, env) {
   if (request.method !== "POST") return json({ error: "method_not_allowed" }, 405);
@@ -20,9 +30,9 @@ export async function handleRecommend(request, env) {
 
   // ---- parse + validate (whitelist everything) ----
   const group = GROUPS.has(body.group) ? body.group : "norm";
-  const animal = typeof body.animal === "string" ? body.animal.toUpperCase() : "PSF";
-  const ap = animal[0] === "A" ? "A" : "P";
-  const ts = animal[1] === "T" ? "T" : "S";
+  const animal = ["C0","C1","C2"].includes(body.animal) ? body.animal : "C0";
+  const { ap, ts } = CLUSTER_AXIS[animal];
+  const animal = ["C0","C1","C2"].includes(body.animal) ? body.animal : "C0";
   const region = typeof body.region === "string" ? body.region : "";
   const district = typeof body.district === "string" ? body.district : "";
   const space = body.space === "outdoor" ? "outdoor" : body.space === "indoor" ? "indoor" : "";
@@ -85,9 +95,10 @@ export async function handleRecommend(request, env) {
       const geo = useGps
         ? geoRadius(lat, lng, baseRadius * step.rMult)
         : geoDistrict(region, district, step.sigungu);
-      const rows = await fetchCandidates(env, {
+      const rawRows = await fetchCandidates(env, {
         ap, ts, spaceDb, geo, group: step.group, cost: step.cost, time: step.time, poolLimit: POOL_LIMIT,
       });
+      const rows = applyHeavyHistoryPenalty(rawRows, group);
       stepsUsed = i;
       for (const r of rows) {
         if (!inAll.has(r.row_id)) { inAll.add(r.row_id); allRows.push(r); }
@@ -128,7 +139,7 @@ export async function handleRecommend(request, env) {
     return json({
       ok: true,
       group,
-      animal: ap + ts + (animal[2] === "E" ? "E" : "F"),
+      animal,
       region,
       district,
       locationMode: useGps ? "gps" : "district",   // 실제 적용된 위치 기준 (검증용)
