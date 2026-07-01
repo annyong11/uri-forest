@@ -831,9 +831,13 @@ function classifyAnimal() {
 // ══════════════════════════════════
 function recommendPrograms(group, animalCode, cond) {
   const G = GROUP_INFO[group];
-  const ap = animalCode[0]; // A or P
-  const ts = animalCode[1]; // T or S
-  const ef = animalCode[2]; // E or F
+  //클러스터 풀 기반으로 단순화
+  const LOCAL_POOL = {
+    C0: p => ["실내","혼자","조용"].some(t => p.tags.includes(t)),
+    C1: p => ["야외","자연","활동"].some(t => p.tags.includes(t)),
+    C2: p => ["문화","예술","공연"].some(t => p.tags.includes(t)),
+  };
+  let pool = PROGRAMS.filter(G.filter).filter(LOCAL_POOL[animalCode] || (() => true));
   let pool = PROGRAMS.filter(G.filter);
   // 성향 필터 (가중 점수)
   const scored = pool.map(p => {

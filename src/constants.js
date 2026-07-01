@@ -67,7 +67,7 @@ export const GROUPS = new Set(["cli", "isol", "norm"]);
 // the current dataset (no preference scores exist), so the W.pop term contributes
 // nothing — ranking is personality fit + RANDOM() tie-break. The term/weight are kept
 // so a popularity prior can be reintroduced later without touching the formula.
-export const W = { ap: 2.0, ts: 2.0, space: 1.0, pop: 0.9 };
+export const W = { pool: 1.0, space: 1.0, pop: 0.9 };
 
 // Diversity cap: at most this many results may share one category_key (park-flood control).
 export const PER_CAT = 2;
@@ -76,12 +76,15 @@ export const PER_CAT = 2;
 // lower-scored but more DIVERSE rows still enter the pool in park-heavy regions.
 export const POOL_LIMIT = 300;
 
-// 클러스터 → DB 축 매핑
-export const CLUSTER_AXIS = {
-  C0: { ap: "P", ts: "S" },  // 집콕힐링형
-  C1: { ap: "A", ts: "T" },  // 야외활동형
-  C2: { ap: "P", ts: "T" },  // 문화예술형
+// 클러스터 → mid_category
+export const CLUSTER_POOL = {
+  C0: ["나혼자문화시설","도서관","박물관","미술관","문화의집","전시관","온라인콘텐츠","DIY키트"],
+  C1: ["도시공원","국공립공원","치유의숲","휴양림","주말농장","농어촌체험마을","캠핑장","관광지","도보여행지(골목/스토리)"],
+  C2: ["박물관","미술관","전시관","공연/행사","향토문화유적","도보여행지(골목/스토리)","영화관","문화예술교육프로그램"],
 };
+
+export const POOL_BONUS = 50;      // 클러스터 풀 안 카테고리 가점
+export const NOT_IN_POOL_BONUS = 10; // 풀 밖 카테고리 기본 가점
 
 // 고립은둔 수준별 파라미터 (ipynb recommend_engine_v2 이식)
 export const ISOLATION_PARAMS = {

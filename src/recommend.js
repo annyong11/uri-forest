@@ -3,7 +3,7 @@
 // relaxation ladder with a per-category diversity cap over the SQL-scored candidates.
 
 import { json } from "./http.js";
-import { GROUPS, SPACE_MAP, PER_CAT, POOL_LIMIT, RADIUS_KM, KR_BOUNDS, CLUSTER_AXIS, HEAVY_HISTORY_KEYWORDS, HEAVY_HISTORY_PENALTY } from "./constants.js";import { geoRadius, geoDistrict, gpsInRegion } from "./predicates.js";
+import { GROUPS, SPACE_MAP, PER_CAT, POOL_LIMIT, RADIUS_KM, KR_BOUNDS, HEAVY_HISTORY_KEYWORDS, HEAVY_HISTORY_PENALTY } from "./constants.js";
 import { fetchCandidates } from "./candidates.js";
 import { formatResults } from "./format.js";
 
@@ -31,7 +31,6 @@ export async function handleRecommend(request, env) {
   // ---- parse + validate (whitelist everything) ----
   const group = GROUPS.has(body.group) ? body.group : "norm";
   const animal = ["C0","C1","C2"].includes(body.animal) ? body.animal : "C0";
-  const { ap, ts } = CLUSTER_AXIS[animal];
   const animal = ["C0","C1","C2"].includes(body.animal) ? body.animal : "C0";
   const region = typeof body.region === "string" ? body.region : "";
   const district = typeof body.district === "string" ? body.district : "";
@@ -85,9 +84,10 @@ export async function handleRecommend(request, env) {
     // #5: 다이버시티 캡 버킷. 문화유적 계열(large_category '문화유적' + '문화유적/스토리')은
     // 사용자에겐 같은 "문화유적"으로 보이므로 한 버킷으로 묶어 2+2=4개 중복을 막는다.
     const bucketKey = (r) => {
-      if (r.category_key === "outdoor_park") return "outdoor_park";
-      if ((r.large_category || "").startsWith("문화유적")) return "문화유적";
-      return r.category_key || "기타";
+    const mid = r.mid_category || "";
+    if (mid === "도시공원" || mid === "국공립공원") return "공원류";
+    if (mid === "향토문화유적" || mid === "도보여행지(골목/스토리)") return "문화유적류";
+    return r.category_key || "기타";
     };
 
     for (let i = 0; i < ladder.length && top.length < limit; i++) {
@@ -96,7 +96,7 @@ export async function handleRecommend(request, env) {
         ? geoRadius(lat, lng, baseRadius * step.rMult)
         : geoDistrict(region, district, step.sigungu);
       const rawRows = await fetchCandidates(env, {
-        ap, ts, spaceDb, geo, group: step.group, cost: step.cost, time: step.time, poolLimit: POOL_LIMIT,
+        animal, spaceDb, geo, group: step.group, cost: step.cost, time: step.time, poolLimit: POOL_LIMIT,
       });
       const rows = applyHeavyHistoryPenalty(rawRows, group);
       stepsUsed = i;

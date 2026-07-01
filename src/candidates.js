@@ -1,7 +1,7 @@
 // src/candidates.js
 // The D1 candidate query: personality score computed in SQL + filters.
 
-import { W, ISOLATION_PARAMS, SOCIAL_FIT_WEIGHT } from "./constants.js";
+import { W, CLUSTER_POOL, POOL_BONUS, NOT_IN_POOL_BONUS, ISOLATION_PARAMS, SOCIAL_FIT_WEIGHT } from "./constants.js";
 import { groupPredicate, costPredicate, timePredicate } from "./predicates.js";
 
 // Columns selected for every place/program row (shared by recommend + places lookup).
@@ -22,15 +22,20 @@ export const SELECT_COLS = `
  *           group:string, cost:string, time:string, poolLimit:number }} opts
  * @returns {Promise<any[]>}
  */
-export async function fetchCandidates(env, { ap, ts, spaceDb, geo, group, cost, time, poolLimit }) {
+export async function fetchCandidates(env, { animal, spaceDb, geo, group, cost, time, poolLimit }) {
+  const pool = CLUSTER_POOL[animal] || [];
   const p = ISOLATION_PARAMS[group] || ISOLATION_PARAMS.norm;
   const absFitRatio = Math.abs(p.socialFitRatio);
   const fitSign = p.socialFitRatio < 0 ? -1 : 1;
 
+  // mid_category가 클러스터 풀에 있으면 POOL_BONUS, 없으면 NOT_IN_POOL_BONUS
+  const poolCaseSQL = pool.length > 0
+    ? `CASE WHEN mid_category IN (${pool.map(() => "?").join(",")}) THEN ${POOL_BONUS} ELSE ${NOT_IN_POOL_BONUS} END`
+    : `${NOT_IN_POOL_BONUS}`;
+
   const sql =
     `SELECT ${SELECT_COLS},
-       ( (axis_ap = ?) * ${W.ap}
-         + ( (axis_ts = ?) OR (? = 'S' AND solo_ok = 1) ) * ${W.ts}
+       ( ${poolCaseSQL} * ${W.pool}
          + (indoor_outdoor = ?) * ${W.space}
          + (base_score / 5.0) * ${W.pop}
          + (is_program = 1) * ?
@@ -50,16 +55,32 @@ export async function fetchCandidates(env, { ap, ts, spaceDb, geo, group, cost, 
      LIMIT ?`;
 
   const params = [
-    ap, ts, ts, spaceDb,          // 성향 매칭
-    p.programBonus,                // is_program 가점/감점
-    fitSign, SOCIAL_FIT_WEIGHT, absFitRatio,   // social_fit (ratio < 0 분기)
-    SOCIAL_FIT_WEIGHT, absFitRatio,            // social_fit (ratio >= 0 분기)
+    ...pool,                                           // CASE WHEN mid_category IN (...)
+    spaceDb,                                           // indoor_outdoor 매칭
+    p.programBonus,                                    // is_program 가점/감점
+    fitSign, SOCIAL_FIT_WEIGHT, absFitRatio,           // social_fit (ratio < 0 분기)
+    SOCIAL_FIT_WEIGHT, absFitRatio,                    // social_fit (ratio >= 0 분기)
     ...geo.params,
     poolLimit,
   ];
 
   const { results } = await env.DB.prepare(sql).bind(...params).all();
   let rows = results || [];
-  if (geo.within) rows = rows.filter(geo.within);
+  if (geo.within) {
+    rows = rows
+      .filter(r =>
+        r.mid_category === "온라인콘텐츠" || r.mid_category === "DIY키트"
+        || geo.within(r)
+      )
+      .map(r => {
+        // 좌표 없는 시설은 9999km 페널티 (온라인콘텐츠 제외)
+        const isOnline = r.mid_category === "온라인콘텐츠" || r.mid_category === "DIY키트";
+        if (!isOnline && (r.latitude == null || r.longitude == null)) {
+          return { ...r, score: (r.score || 0) - 9999 * 0.5 };
+        }
+        return r;
+      })
+      .sort((a, b) => (b.score || 0) - (a.score || 0));
+  }
   return rows;
 }
