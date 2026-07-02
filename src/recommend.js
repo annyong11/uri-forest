@@ -6,6 +6,7 @@ import { json } from "./http.js";
 import { GROUPS, SPACE_MAP, PER_CAT, POOL_LIMIT, RADIUS_KM, KR_BOUNDS, HEAVY_HISTORY_KEYWORDS, HEAVY_HISTORY_PENALTY } from "./constants.js";
 import { fetchCandidates } from "./candidates.js";
 import { formatResults } from "./format.js";
+import { geoDistrict, geoRadius, gpsInRegion } from "./predicates.js";
 
 function applyHeavyHistoryPenalty(rows, group) {
   const penalty = HEAVY_HISTORY_PENALTY[group] ?? 0;

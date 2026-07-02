@@ -32,6 +32,18 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # 배포 전 테스트: import 누락으로 인한 런타임 오류(예: "geoDistrict is not defined")
+      # 처럼 번들은 성공하지만 실행 시 터지는 버그를 여기서 잡는다. dry-run 은 전역 참조로
+      # 간주해 이런 undefined 참조를 못 잡으므로 테스트가 반드시 필요.
+      - name: Test
+        run: npm test
+
+      # 배포 전 빌드 검증: esbuild 로 번들만 만들어보고 원격에는 아무것도 올리지 않음.
+      # (--dry-run 은 API 토큰이 필요 없음.) "animal 중복 선언" 같은 문법/번들 오류를
+      # 실제 deploy 전에 여기서 잡아 실패시킨다 → 깨진 코드가 라이브로 나가지 않음.
+      - name: Build check (dry-run)
+        run: npx wrangler deploy --dry-run
+
       # wrangler.jsonc 에 database_id 가 이미 박혀 있고 정적자산(public/)도 같은
       # Worker 로 배포되므로, 이 한 단계가 코드+UI 를 모두 배포합니다.
       # (D1 데이터 적재는 쓰기 한도 때문에 자동배포에 포함하지 않음 — DEPLOY.md 2번 참고)
