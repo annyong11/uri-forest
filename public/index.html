@@ -771,7 +771,6 @@ function classifyGroup() {
   return 'norm';
 }
 
-═══════════════════════════════
 // ══════════════════════════════════
 // 성향 분류 — K-means centroid 기반 (학습 데이터와 동일한 방식)
 // ══════════════════════════════════
@@ -838,7 +837,6 @@ function recommendPrograms(group, animalCode, cond) {
     C2: p => ["문화","예술","공연"].some(t => p.tags.includes(t)),
   };
   let pool = PROGRAMS.filter(G.filter).filter(LOCAL_POOL[animalCode] || (() => true));
-  let pool = PROGRAMS.filter(G.filter);
   // 성향 필터 (가중 점수)
   const scored = pool.map(p => {
     let score = 0;
